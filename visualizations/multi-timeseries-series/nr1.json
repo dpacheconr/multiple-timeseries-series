@@ -60,6 +60,14 @@
                     "description": "Trimmed Area",
                     "type": "boolean"
                 }
+                
+                ,
+                {
+                    "name": "trimpercent",
+                    "title": "Trim Percentage",
+                    "description": "Percentage to trim from min and max values, defaults to 10%",
+                    "type": "string"
+                }
                 ,
                 {
                     "name": "clippedareabol",
@@ -69,9 +77,9 @@
                 }
                 ,
                 {
-                    "name": "trimpercent",
-                    "title": "Trim Percentage",
-                    "description": "Percentage to trim from min and max values, defaults to 10%",
+                    "name": "clipsize",
+                    "title": "Clip size",
+                    "description": "Number of pointsto clip from data set",
                     "type": "string"
                 }
             ]

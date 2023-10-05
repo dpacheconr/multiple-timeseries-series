@@ -10,6 +10,7 @@ import { CSVLink } from "react-csv"
 const defaultColors=['#e6194b', '#3cb44b', '#000000', '#f58231', '#911eb4', '#f032e6', '#bcf60c', '#008080', '#9a6324', '#800000', '#808000', '#000075', '#808080', '#000000']
 const c_accountid = 3056204
 let trimpercent = 10
+let clipSize=1
 let avgbol = false
 let minmaxareabol = false
 let trimmedareabol = false
@@ -24,6 +25,27 @@ function avgfunction (array) {
         sum += array[i];
     }
     return parseInt(sum / array.length)
+}
+
+function clipFunction (dataArray,size) {
+    let sorted = dataArray.sort(function(a, b){return a - b});
+    let clipped=sorted.slice(size,sorted.length-size)
+    return clipped
+}
+
+function getMinMax(data) {
+    let minValue = Infinity;
+    let maxValue = -Infinity;
+    for (let item of data) {
+        // Find minimum value
+        if (item < minValue)
+            minValue = item;
+
+        // Find maximum value
+        if (item > maxValue)
+            maxValue = item;                
+    } 
+    return [minValue,maxValue]
 }
 
 function unixtodatetime(data) {
@@ -125,46 +147,43 @@ function calculatedata(data) {
     let trimmedminctrl = []
     let trimmedmaxctrl = []
     let trimmedareactrl = []
+    let clippedareactrl = []
     let avgarrctrl = []
     let minmaxareactrl=[]
 
 
     for (let i = 0; i < data[0].data[0].data.length; i++) {     //iterate over each bucket, using the first series as control
-        let ctrlarray = []
+        let ctrlarray = [] //this is the y values for the current i'th bucket 
         data.forEach((z,idx)=>{
             if (idx > 0) { //we dont want to include the most recent series in the data
                 ctrlarray.push(z.data[0].data[i].y)
              }  
         })
-        let avgarr =  []
-
-        let trimmedarea = []
-        let trimmedmin= []
-        let trimmedmax= []
-
-        let minmaxarea= []
-        let minmaxmins = []
-        let minmaxmaxs = []
-        
         resultarray.push(ctrlarray)
-  
-        resultarray.forEach((array,idx) => {
-            let minValue = Infinity;
-            let maxValue = -Infinity;
+    } 
+
+    let avgarr =  []
+
+    let trimmedarea = []
+    let trimmedmin= []
+    let trimmedmax= []
+
+    let minmaxarea= []
+    let minmaxmins = []
+    let minmaxmaxs = []
+
+    let clippedarea = []
 
 
-                for (let item of array) {
-                    // Find minimum value
-                    if (item < minValue)
-                        minValue = item;
-            
-                    // Find maximum value
-                    if (item > maxValue)
-                        maxValue = item;                
-                } 
-    
-                avgarr.push(avgfunction(array))
-    
+
+        resultarray.forEach((yvalues) => {
+
+            let minMax = getMinMax(yvalues)
+            let minValue = minMax[0]
+            let maxValue =  minMax[1]
+
+                avgarr.push(avgfunction(yvalues))
+
                 let mins = parseInt(((maxValue - minValue)*(trimpercent/100))+minValue)
                 let maxs = parseInt(maxValue - ((maxValue - minValue)*(trimpercent/100)))
     
@@ -176,25 +195,30 @@ function calculatedata(data) {
                 minmaxmins.push(minValue)
                 minmaxmaxs.push(maxValue)
                 minmaxarea.push([minValue,maxValue])       
-               
+
+
+                //determine clipped area
+                let clippedData=clipFunction(yvalues,parseInt(clipSize))
+                clippedarea.push(getMinMax(clippedData))
+
         })
 
-        console.log(avgarr)
+        for (let i = 0; i < data[0].data[0].data.length; i++) {  
+            let z = data[0].data[0].data[i]
 
-        let z = data[0].data[0].data[i]
+            avgarrctrl.push(build_json(z,i,avgarr,"avg"))
 
+            trimmedareactrl.push(build_json(z,i,trimmedarea,"trimmedarea"))
+            trimmedminctrl.push(build_json(z,i,trimmedmin,"trimmedmin"))
+            trimmedmaxctrl.push(build_json(z,i,trimmedmax,"trimmedmax"))
 
-        avgarrctrl.push(build_json(z,i,avgarr,"avg"))
+            minmaxareactrl.push(build_json(z,i,minmaxarea,"minmaxarea"))
+            minmaxminsctrl.push(build_json(z,i,minmaxmins,"min"))
+            minmaxmaxsctrl.push(build_json(z,i,minmaxmaxs,"max"))
 
-        trimmedareactrl.push(build_json(z,i,trimmedarea,"trimmedarea"))
-        trimmedminctrl.push(build_json(z,i,trimmedmin,"trimmedmin"))
-        trimmedmaxctrl.push(build_json(z,i,trimmedmax,"trimmedmax"))
+            clippedareactrl.push(build_json(z,i,clippedarea,"clippedarea"))
 
-        minmaxareactrl.push(build_json(z,i,minmaxarea,"minmaxarea"))
-        minmaxminsctrl.push(build_json(z,i,minmaxmins,"min"))
-        minmaxmaxsctrl.push(build_json(z,i,minmaxmaxs,"max"))
-
-    } 
+        }
 
     let avgset = parse_data (avgarrctrl)
     let trimmedareaset = parse_data (trimmedareactrl)
@@ -203,6 +227,7 @@ function calculatedata(data) {
     let minmaxareaset = parse_data (minmaxareactrl)
     let minset = parse_data (minmaxminsctrl)
     let maxset = parse_data (minmaxmaxsctrl)
+    let clippedareaset = parse_data(clippedareactrl)
 
 
 
@@ -212,6 +237,7 @@ function calculatedata(data) {
     data.push({"data":[{"data":trimmedminset, "metadata":{"viz":"main","name": "trimmedmin","id":"02D6A84F7B97E4709A11276615FDAAB3EE2BEE415", "color": defaultColors[Math.floor(Math.random() * defaultColors.length)]}}],loading: false, error: null})
     data.push({"data":[{"data":trimmedmaxset, "metadata":{"viz":"main","name": "trimmedmax","id":"2C1F4F2BAA2800FD80F50C3811F38D03B52DEEEB1", "color": defaultColors[Math.floor(Math.random() * defaultColors.length)]}}],loading: false, error: null})
     data.push({"data":[{"data":minmaxareaset, "metadata":{"viz":"main","name": "minmaxarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE9", "color": defaultColors[Math.floor(Math.random() * defaultColors.length)]}}],loading: false, error: null})
+    data.push({"data":[{"data":clippedareaset, "metadata":{"viz":"main","name": "clippedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE8", "color": defaultColors[Math.floor(Math.random() * defaultColors.length)]}}],loading: false, error: null})
     data.push({"data":[{"data":minset, "metadata":{"viz":"main","name": "min","id":"625D011FAC794651F25160AD89612DFAAE954C0CB", "color": defaultColors[Math.floor(Math.random() * defaultColors.length)]}}],loading: false, error: null})
     data.push({"data":[{"data":maxset, "metadata":{"viz":"main","name": "max","id":"DDB4E3844C923B3F794EC52642E22CBE9FC8D8D31", "color": defaultColors[Math.floor(Math.random() * defaultColors.length)]}}],loading: false, error: null})
    
@@ -260,20 +286,11 @@ function AlignedTimeseries(props) {
             if (props.nrqlQueries[0].trimpercent != "") {
                 trimpercent = props.nrqlQueries[0].trimpercent
             }
+            if (props.nrqlQueries[0].clipsize != "") {
+                clipSize = props.nrqlQueries[0].clipsize
+            }
            
-            // // generate the compare queries
-            // if (platformstatecontext.timeRange == undefined) {
-            //     for (let i = 1; i <= compare; i++) {
-            //         if (i == 1 ) {
-            //             let query = mainquery + " SINCE " + (parseInt(windowsize)*(i))  + " seconds ago TIMESERIES " + timeseries
-            //             props.nrqlQueries[0].query = query
-            //         } else {
-            //             let query = mainquery + " SINCE " + (parseInt(windowsize)*(i))  + " seconds ago " + " until "+ (parseInt(windowsize)*(i-1))  + " seconds ago TIMESERIES " + timeseries
-            //             nrqlQueries.push({accountId: c_accountid, query: query, color: defaultColors[i]})
-                    
-            //         }                
-            //     }
-            // } else {
+
             for (let i = 0; i <= compare; i++) {
                 let query = mainquery + " SINCE " + (parseInt(windowsize)*(i+1))  + " seconds ago " + " until "+ (parseInt(windowsize)*(i))  + " seconds ago TIMESERIES " + timeseries
                 if (i == 0 ) {
@@ -285,7 +302,7 @@ function AlignedTimeseries(props) {
                 
                 }                
             }
-          // }
+
 
             let promises=nrqlQueries.map((q)=>{return NrqlQuery.query({accountIds: [q.accountId], query: q.query,formatTypeenum: NrqlQuery.FORMAT_TYPE.CHART})})
             let data
