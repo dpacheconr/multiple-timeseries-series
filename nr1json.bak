@@ -1,7 +1,7 @@
 {
     "schemaType": "VISUALIZATION",
     "id": "multi-timeseries-series",
-    "displayName": "test: period comparison",
+    "displayName": "Multiple Timeseries Series",
     "description": "Displays timeseries data from different periods on the same chart",
     "configuration": [
         {
@@ -26,12 +26,49 @@
                     "title": "Compare",
                     "description": "Number minutes/hours/days/weeks to compare",
                     "type": "number"
-                },
+                }
+                ,
+                // {
+                //     "name": "aggregator",
+                //     "title": "Aggregator",
+                //     "description": "minutes/hours/days/weeks/years",
+                //     "type": "enum",
+                //     "items": [
+                //         {
+                //           "title": "Minutes",
+                //           "value": "minutes"
+                //         },
+                //         {
+                //             "title": "Hours",
+                //             "value": "hours"
+                //         },
+                //         {
+                //             "title": "Days",
+                //             "value": "days"
+                //         }    
+                //         ,
+                //         {
+                //             "title": "Weeks",
+                //             "value": "weeks"
+                //         } ,
+                //         {
+                //             "title": "Years",
+                //             "value": "years"
+                //         }  
+                //     ]
+                // },
                 {
                     "name": "timeseries",
                     "title": "Timeseries bucket size",
                     "description": "minutes/days/hours/weeks/years",
                     "type": "string"
+                }
+                ,
+                {
+                    "name": "windowsize",
+                    "title": "Window size",
+                    "description": "Window size in milliseconds",
+                    "type": "number"
                 }
                 ,
                 {

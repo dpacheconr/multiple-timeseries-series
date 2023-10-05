@@ -1,24 +1,20 @@
+/* eslint-disable react/prop-types */
+
 import React, { useState, useEffect} from 'react';
-import {NrqlQuery, Spinner,Grid,GridItem} from 'nr1';
+import {NrqlQuery, Spinner,Grid,GridItem,AutoSizer,PlatformStateContext} from 'nr1';
 import { Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ComposedChart,Area} from 'recharts';
 import { CSVLink } from "react-csv"
 
 
 // Global variables
 const defaultColors=['#e6194b', '#3cb44b', '#000000', '#f58231', '#911eb4', '#f032e6', '#bcf60c', '#008080', '#9a6324', '#800000', '#808000', '#000075', '#808080', '#000000']
-
-let trimmedareaset = []
-let minmaxareaset = []
+const c_accountid = 3056204
 let trimpercent = 10
 let avgbol = false
 let minmaxareabol = false
 let trimmedareabol = false
-let intwitdh = 1500
-let intheight = 450
-let margintop = 5
-let marginright= 30
-let marginleft= 20
-let marginbottom= 5
+let hideoriginaldata = false
+let globalerror
 
 
 function avgfunction (array) {
@@ -29,6 +25,32 @@ function avgfunction (array) {
     return parseInt(sum / array.length)
 }
 
+function unixtodatetime(data) {
+    let keys = ["x","begin_time","end_time"]
+    data.map((s) => {
+        for (let item in s){
+            if (item == "data"){
+                for (let subitem in s[item]) {
+                    for (let i in s[item][subitem].data){
+                        for (let j in s[item][subitem].data[i]){
+                            if (keys.includes(j)){
+                                let value = s[item][subitem].data[i][j]
+                                let dateObj = new Date(value);
+                                let utcString = dateObj.toUTCString();
+                                let time = utcString.slice(5,-4);
+                                s[item][subitem].data[i][j] = time
+                            }
+                        }
+
+                    }
+                }
+                    
+                }
+            }
+
+    })
+}
+ 
 function exportToCsv (data){
     let newdata = []
 
@@ -94,146 +116,193 @@ function parse_data(array) {
 
 
 function calculatedata(data) {
-    let controlarray = []
+    let ctrlarray = []
     let resultarray = []
 
-    let minarraycontrol = []
-    let maxarraycontrol = []
-    let lowarraycontrol = []
-    let higharraycontrol = []
-    let arrayrangecontrol = []
-    let avgarrcontrol = []
-    let minmaxareacontrol=[]
+    let minmaxminsctrl = []
+    let minmaxmaxsctrl = []
+    let trimmedminctrl = []
+    let trimmedmaxctrl = []
+    let trimmedareactrl = []
+    let avgarrctrl = []
+    let minmaxareactrl=[]
 
 
-    let datanames = ["min","max","lowes","highes","avg"]
+    let datanames = ["min","max","trimmedmin","trimmedmax","avg","trimmedarea","minmaxarea"]
 
     for (let i = 0; i < data[0].data[0].data.length; i++) {
         data.forEach((z)=>{
             let name = z.data[0].metadata.name
             if (!datanames.includes(name)){
-                controlarray.push(z.data[0].data[i].y)
+                ctrlarray.push(z.data[0].data[i].y)
             }
            
         })
-        let minmaxarea= []
         let avgarr =  []
-        let minarray = []
-        let maxarray = []
-        let arrayrange = []
-        let lowarray= []
-        let higharray= []
-        
-        resultarray.push(controlarray)
-        controlarray = []
 
-        resultarray.forEach(array => {
+        let trimmedarea = []
+        let trimmedmin= []
+        let trimmedmax= []
+
+        let minmaxarea= []
+        let minmaxmins = []
+        let minmaxmaxs = []
+        
+        resultarray.push(ctrlarray)
+        ctrlarray = []
+        console.log("my arrays",resultarray)
+        resultarray.forEach((array,idx) => {
             let minValue = Infinity;
             let maxValue = -Infinity;
-            for (let item of array) {
+            // if (idx > 0){
+            //     console.log(idx)
+                for (let item of array) {
         
-                // Find minimum value
-                if (item < minValue)
-                    minValue = item;
-        
-                // Find maximum value
-                if (item > maxValue)
-                    maxValue = item;                
-            } 
-
-            avgarr.push(avgfunction(array))
-
-            minarray.push(minValue)
-            maxarray.push(maxValue)
-
-            minmaxarea.push([minValue,maxValue])
-
-            let mins = ((maxValue - minValue)*(trimpercent/100))+minValue
-            let maxs = maxValue - ((maxValue - minValue)*(trimpercent/100))
-
-
-            lowarray.push(mins)
-            higharray.push(maxs)
-
-            arrayrange.push([mins,maxs])
+                    // Find minimum value
+                    if (item < minValue)
+                        minValue = item;
             
+                    // Find maximum value
+                    if (item > maxValue)
+                        maxValue = item;                
+                } 
+    
+                avgarr.push(avgfunction(array))
+    
+                let mins = parseInt(((maxValue - minValue)*(trimpercent/100))+minValue)
+                let maxs = parseInt(maxValue - ((maxValue - minValue)*(trimpercent/100)))
+    
+    
+                trimmedmin.push(mins)
+                trimmedmax.push(maxs)
+                trimmedarea.push([mins,maxs])
+    
+                minmaxmins.push(minValue)
+                minmaxmaxs.push(maxValue)
+                minmaxarea.push([minValue,maxValue])       
+            // }
+               
         })
+
+        console.log(avgarr)
 
         let z = data[0].data[0].data[i]
 
-        minarraycontrol.push(build_json(z,i,minarray,"min"))
-        maxarraycontrol.push(build_json(z,i,maxarray,"max"))
-        arrayrangecontrol.push(build_json(z,i,arrayrange,"arrayrange"))
-        lowarraycontrol.push(build_json(z,i,lowarray,"lowarray"))
-        higharraycontrol.push(build_json(z,i,higharray,"higharray"))
-        avgarrcontrol.push(build_json(z,i,avgarr,"avgarr"))
-        minmaxareacontrol.push(build_json(z,i,minmaxarea,"minmaxarea"))
+
+        avgarrctrl.push(build_json(z,i,avgarr,"avg"))
+
+        trimmedareactrl.push(build_json(z,i,trimmedarea,"trimmedarea"))
+        trimmedminctrl.push(build_json(z,i,trimmedmin,"trimmedmin"))
+        trimmedmaxctrl.push(build_json(z,i,trimmedmax,"trimmedmax"))
+
+        minmaxareactrl.push(build_json(z,i,minmaxarea,"minmaxarea"))
+        minmaxminsctrl.push(build_json(z,i,minmaxmins,"min"))
+        minmaxmaxsctrl.push(build_json(z,i,minmaxmaxs,"max"))
 
     } 
 
-    let minset = parse_data (minarraycontrol)
-    let maxset = parse_data (maxarraycontrol)
-    let trimmedminset = parse_data (lowarraycontrol)
-    let trimmedmaxset = parse_data (higharraycontrol)
-    let avgset = parse_data (avgarrcontrol)
-    trimmedareaset = parse_data (arrayrangecontrol)
-    minmaxareaset = parse_data (minmaxareacontrol)
+    let avgset = parse_data (avgarrctrl)
+    let trimmedareaset = parse_data (trimmedareactrl)
+    let trimmedminset = parse_data (trimmedminctrl)
+    let trimmedmaxset = parse_data (trimmedmaxctrl)
+    let minmaxareaset = parse_data (minmaxareactrl)
+    let minset = parse_data (minmaxminsctrl)
+    let maxset = parse_data (minmaxmaxsctrl)
 
 
-    // push data with hardcoded colours
+
+    // update queries with calculated data
+    data.push({"data":[{"data":avgset, "metadata":{"viz":"main","name": "avg","id":"74B5B05EEA583471E03DCBF0123D81CC79CAE0FE9", "color": defaultColors[Math.floor(Math.random() * defaultColors.length)]}}],loading: false, error: null})
+    data.push({"data":[{"data":trimmedareaset, "metadata":{"viz":"main","name": "trimmedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CEE0FE9", "color": defaultColors[Math.floor(Math.random() * defaultColors.length)]}}],loading: false, error: null})
+    data.push({"data":[{"data":trimmedminset, "metadata":{"viz":"main","name": "trimmedmin","id":"02D6A84F7B97E4709A11276615FDAAB3EE2BEE415", "color": defaultColors[Math.floor(Math.random() * defaultColors.length)]}}],loading: false, error: null})
+    data.push({"data":[{"data":trimmedmaxset, "metadata":{"viz":"main","name": "trimmedmax","id":"2C1F4F2BAA2800FD80F50C3811F38D03B52DEEEB1", "color": defaultColors[Math.floor(Math.random() * defaultColors.length)]}}],loading: false, error: null})
+    data.push({"data":[{"data":minmaxareaset, "metadata":{"viz":"main","name": "minmaxarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE9", "color": defaultColors[Math.floor(Math.random() * defaultColors.length)]}}],loading: false, error: null})
     data.push({"data":[{"data":minset, "metadata":{"viz":"main","name": "min","id":"625D011FAC794651F25160AD89612DFAAE954C0CB", "color": defaultColors[Math.floor(Math.random() * defaultColors.length)]}}],loading: false, error: null})
     data.push({"data":[{"data":maxset, "metadata":{"viz":"main","name": "max","id":"DDB4E3844C923B3F794EC52642E22CBE9FC8D8D31", "color": defaultColors[Math.floor(Math.random() * defaultColors.length)]}}],loading: false, error: null})
-    data.push({"data":[{"data":trimmedminset, "metadata":{"viz":"main","name": "lowes","id":"02D6A84F7B97E4709A11276615FDAAB3EE2BEE415", "color": defaultColors[Math.floor(Math.random() * defaultColors.length)]}}],loading: false, error: null})
-    data.push({"data":[{"data":trimmedmaxset, "metadata":{"viz":"main","name": "highes","id":"2C1F4F2BAA2800FD80F50C3811F38D03B52DEEEB1", "color": defaultColors[Math.floor(Math.random() * defaultColors.length)]}}],loading: false, error: null})
-    data.push({"data":[{"data":avgset, "metadata":{"viz":"main","name": "avg","id":"74B5B05EEA583471E03DCBF0123D81CC79CAE0FE9", "color": defaultColors[Math.floor(Math.random() * defaultColors.length)]}}],loading: false, error: null})
+   
 }
 
+const duration = 60*60*24*7*1000
+const enddate =  Date.now()
+const startdate = enddate - duration
+
+// // Often provided by the PlatformState provider
+const timeRange = {
+    begin_time: startdate,
+    duration: null, 
+    end_time: enddate
+  };
+  
+// Often provided by the PlatformState provider
+const ctx = {tvMode: false, accountId: c_accountid, filters: undefined, timeRange: timeRange}
+
 function AlignedTimeseries(props) {
-    const {nrqlQueries, alignment, configuration} = props;
+    const {nrqlQueries, alignment} = props;
     const [queryResults, setQueryResults] = useState(null);
-        
-    useEffect(async () => { 
+    // const platformstatecontext = useContext(PlatformStateContext);
+    const platformstatecontext = ctx
+    
+    useEffect(async () => {      
+            let windowsize = 180000
             let mainquery = props.nrqlQueries[0].query
             let compare= props.nrqlQueries[0].compare
             let timeseries= props.nrqlQueries[0].timeseries
-            let aggregator= props.nrqlQueries[0].aggregator
+            // let aggregator= props.nrqlQueries[0].aggregator
             avgbol = props.nrqlQueries[0].average
             minmaxareabol = props.nrqlQueries[0].minmaxareabol
             trimmedareabol = props.nrqlQueries[0].trimmedareabol
+            hideoriginaldata = props.nrqlQueries[0].hideoriginaldata
+            if (platformstatecontext.timeRange != undefined) {
+                if (platformstatecontext.timeRange.duration == null){
+                    windowsize = (parseInt(platformstatecontext.timeRange.end_time) - parseInt(platformstatecontext.timeRange.begin_time)) / 1000
+                } else {
+                  windowsize = parseInt(platformstatecontext.timeRange.duration) / 1000
+                }
+                
+            }
 
             if (props.nrqlQueries[0].trimpercent != "") {
                 trimpercent = props.nrqlQueries[0].trimpercent
             }
-            if (props.configuration[0].width != "") {
-                intwitdh = parseInt(props.configuration[0].width)
+           
+            // // generate the compare queries
+            // if (platformstatecontext.timeRange == undefined) {
+            //     for (let i = 1; i <= compare; i++) {
+            //         if (i == 1 ) {
+            //             let query = mainquery + " SINCE " + (parseInt(windowsize)*(i))  + " seconds ago TIMESERIES " + timeseries
+            //             props.nrqlQueries[0].query = query
+            //         } else {
+            //             let query = mainquery + " SINCE " + (parseInt(windowsize)*(i))  + " seconds ago " + " until "+ (parseInt(windowsize)*(i-1))  + " seconds ago TIMESERIES " + timeseries
+            //             nrqlQueries.push({accountId: c_accountid, query: query, color: defaultColors[i]})
+                    
+            //         }                
+            //     }
+            // } else {
+            for (let i = 0; i <= compare; i++) {
+                let query = mainquery + " SINCE " + (parseInt(windowsize)*(i+1))  + " seconds ago " + " until "+ (parseInt(windowsize)*(i))  + " seconds ago TIMESERIES " + timeseries
+                if (i == 0 ) {
+                    //let query = mainquery + " SINCE " + ((parseInt(windowsize)*(i+1)))  + " seconds ago " + " until "+ parseInt(windowsize) + " seconds ago TIMESERIES " + timeseries
+                    props.nrqlQueries[0].query = query
+                } else {
+                    // let query = mainquery + " SINCE " + (parseInt(windowsize)*(i+1))  + " seconds ago " + " until "+ (parseInt(windowsize)*(i))  + " seconds ago TIMESERIES " + timeseries
+                    nrqlQueries.push({accountId: c_accountid, query: query, color: defaultColors[i]})
+                
+                }                
             }
-            if (props.configuration[0].height != "") {
-                intheight = parseInt(props.configuration[0].height)
-            }
-            if (props.configuration[0].margintop != "") {
-                margintop = parseInt(props.configuration[0].margintop)
-            }
-            if (props.configuration[0].marginright != "") {
-                marginright= parseInt(props.configuration[0].marginright)
-            }
-            if (props.configuration[0].marginleft != "") {
-                marginleft= parseInt(props.configuration[0].marginleft)
-            }
-            if (props.configuration[0].marginbottom != "") {
-                marginbottom= parseInt(props.configuration[0].marginbottom)
-            }
-
-            let query1= mainquery + " SINCE 1 " + aggregator + " ago TIMESERIES " + timeseries
-            props.nrqlQueries[0].query = query1
-            // generate the compare queries
-            for (let i = 1; i < compare; i++) {
-                let query= mainquery + " SINCE " + (i+1) + " " + aggregator + " ago until "+ i +  " " + aggregator + " " + "ago TIMESERIES " + timeseries
-                nrqlQueries.push({accountId: 3428733, query: query, color: defaultColors[i]})
-              }
+          // }
 
             let promises=nrqlQueries.map((q)=>{return NrqlQuery.query({accountIds: [q.accountId], query: q.query,formatTypeenum: NrqlQuery.FORMAT_TYPE.CHART})})
-            let data = await Promise.all(promises)
-
+            let data
+            try {
+                data = await Promise.all(promises)
+                if (data[0].error != null){
+                   console.log(data[0].error.message)
+                   globalerror = data[0].error.message
+                }
+            } catch (e){
+                console.log(e)
+            }
+            
             // name the queries and update the colours
             let count = 1
             data.forEach(el => {
@@ -244,23 +313,48 @@ function AlignedTimeseries(props) {
                 count ++
             })
             calculatedata(data)
+            console.log("calculate data")
             setQueryResults(data)
+
+
+
+            let refreshratems
+            if (timeseries.includes("second")) { // if the window size is 1 hour or more
+                refreshratems = 10*1000 // 10 seconds in ms
+            } else if (timeseries.includes("minute")) {
+                refreshratems = 30*1000 // 30 seconds in ms
+            } else if (timeseries.includes("hour") || timeseries.includes("week")) { 
+                refreshratems = 1800*1000 // 30 minutes   
+            } else {
+                refreshratems = 5*1000 // 5 seconds in ms
+            }
+
+            const interval = setInterval(() => {console.log("Will refresh the data again in ",refreshratems);setQueryResults(data);}, refreshratems);
+
+        return () => clearInterval(interval);            
      },[props]);
 
-    if(queryResults ) {
+    
+    if (globalerror != undefined){
+        return <div><Spinner inline/>ERROR: {globalerror}</div>
+
+    } else if(queryResults) {
         let seriesAlignment = !alignment || alignment =="" ? "start" : alignment
         const determineComparisonPoint = (r) => {
             let comparisonPoint
             switch(seriesAlignment) {
-                case "middle":
+                case "middle": {
                     let midpoint = parseInt((r.data[0].data.length / 2)) - 1
                     comparisonPoint = comparisonPoint = r.data[0].data[ midpoint].x
-                    break;
-                case "end":
+                    break;                
+                }
+                case "end": {
                     comparisonPoint = r.data[0].data[r.data[0].data.length-1].x
-                    break;
-                default:
+                    break;           
+                }
+                default:{
                     comparisonPoint = r.data[0].data[0].x
+                }
             }
             return comparisonPoint
         }
@@ -276,10 +370,7 @@ function AlignedTimeseries(props) {
             }
         })
 
-        if(queryResults ) {
-            
-        }
-        queryResults.forEach((r,idx)=>{
+        queryResults.forEach((r)=>{
             if(r.data && r.data[0] && r.data[0].metadata && r.data[0].data) {
                 let comparisonPoint=determineComparisonPoint(r)
                 let resultSetBeginTime=comparisonPoint
@@ -292,38 +383,44 @@ function AlignedTimeseries(props) {
             }
         })
 
-        
-          
+        // convert unix timestamps to date time
+        unixtodatetime(queryResults)
+
         //determine latest result set, we'll align everything to that one
         let vizchartData=[]
         let exportchartData=[]
         let linechartdata = []
-        queryResults.forEach(r=>{ if(r.data && r.data[0]) {exportchartData.push(r.data[0])}}) 
-        queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name != "min" && r.data[0].metadata.name != "max" && r.data[0].metadata.name != "lowes" && r.data[0].metadata.name != "highes" && r.data[0].metadata.name != "avg") ){vizchartData.push(r.data[0])}}) 
+        let arechartdata = []
+
+        queryResults.forEach(r=>{ if(r.data && r.data[0] && r.data[0].metadata.name != "trimmedarea" && r.data[0].metadata.name != "minmaxarea") {exportchartData.push(r.data[0])}}) 
+        queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name != "min" && r.data[0].metadata.name != "max" && r.data[0].metadata.name != "trimmedmin" && r.data[0].metadata.name != "trimmedmax" && r.data[0].metadata.name != "avg" && r.data[0].metadata.name != "trimmedarea" && r.data[0].metadata.name != "minmaxarea") ){vizchartData.push(r.data[0])}}) 
+        
         if( avgbol == true ) {
             queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "avg") ){linechartdata.push(r.data[0])}})
+            
         }
-        if( trimmedareabol == false ) {
-            trimmedareaset = []
+        if( trimmedareabol == true ) {
+            queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "trimmedarea") ){arechartdata.push(r.data[0])}})
         }
-        if( minmaxareabol == false ) {
-            minmaxareaset = []
+        
+        if( minmaxareabol == true ) {
+            queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "minmaxarea") ){arechartdata.push(r.data[0])}})
         }
+
+        if (hideoriginaldata == true ) {
+            vizchartData=[vizchartData[0]]
+        }
+     
         let outTable= <>
         <CSVLink filename="QueryData.csv" data={exportToCsv(exportchartData)}>Download data as CSV</CSVLink>
         </>
-        return <div><ComposedChart width={intwitdh} height={intheight}
-        margin={{
-            top: margintop,
-            right: marginright,
-            left: marginleft,
-            bottom: marginbottom,
-          }}
-          >
+        
+        return <AutoSizer>
+            {({ width, height }) => (<div style={{ height, width }}>
+            <ComposedChart width={width-15} height={height-15} margin={{top: 10, right: 10, bottom: 0, left: 0}}>
           <CartesianGrid strokeDasharray="3 3" /> 
           <XAxis dataKey="x"  type="category"  allowDuplicatedCategory={false}/>
           <YAxis  dataKey="y" type="number" domain={['datamin - 10', 'dataMax + 10']} />
-          {/* domain={['datamin - 1000', 'dataMax + 1000']} */}
           <Tooltip />
           <Legend />
           {vizchartData.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>
@@ -332,24 +429,21 @@ function AlignedTimeseries(props) {
           {
           linechartdata.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={5} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>))
           }   
-          {/* type'basis' | 'basisClosed' | 'basisOpen' | 'bumpX' | 'bumpY' | 'bump' | 'linear' | 'linearClosed' | 'natural' | 'monotoneX' | 'monotoneY' | 'monotone' | 'step' | 'stepBefore' | 'stepAfter' | Function */}
-          <Area type="monotone" fill="darkblue" dataKey="y" data={trimmedareaset} name="TrimmedArea" strokeWidth={0}/>
-          <Area type="monotone" fill="lightgrey" dataKey="y" data={minmaxareaset} name="MinMaxArea" strokeWidth={0}/>
+          {arechartdata.map((s) => (<Area type="monotone" fill={s.metadata.color} dataKey="y" data={s.data}  name={s.metadata.name} strokeWidth={0} key={s.metadata.name}/>))}
         </ComposedChart>
         <Grid>
             <GridItem columnSpan={12}>
             {outTable}
             </GridItem>
         </Grid>
-        </div>
-
+          </div>
+        )}
+      </AutoSizer>
     } else {
         return <div className="EmptyState">
                 <div className="loader"><Spinner inline/> Loading and aligning data...</div>
             </div>
-        
     }
   }
-
   
 export default AlignedTimeseries;

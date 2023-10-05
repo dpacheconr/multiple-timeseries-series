@@ -1,6 +1,6 @@
 {
   "schemaType": "NERDPACK",
-  "id": "ce08dfb6-3d9f-4bdc-bd28-4870d66c5305",
-  "displayName": "Multiple Timeseries Series",
+  "id": "5b1dc7dc-8c51-4df3-b7b2-6d024075524d",
+  "displayName": "TEST, disp timeseries data multiple series",
   "description": "Displays timeseries data from different periods on the same chart"
 }
