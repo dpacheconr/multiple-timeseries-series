@@ -60,7 +60,14 @@
                     "description": "Trimmed Area",
                     "type": "boolean"
                 }
-                                ,
+                ,
+                {
+                    "name": "clippedareabol",
+                    "title": "Clipped Area",
+                    "description": "Clipped Area",
+                    "type": "boolean"
+                }
+                ,
                 {
                     "name": "trimpercent",
                     "title": "Trim Percentage",

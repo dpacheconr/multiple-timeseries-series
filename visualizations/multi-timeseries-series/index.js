@@ -13,6 +13,7 @@ let trimpercent = 10
 let avgbol = false
 let minmaxareabol = false
 let trimmedareabol = false
+let clippedareabol = false
 let hideoriginaldata = false
 let globalerror
 
@@ -116,7 +117,7 @@ function parse_data(array) {
 
 
 function calculatedata(data) {
-    let ctrlarray = []
+   
     let resultarray = []
 
     let minmaxminsctrl = []
@@ -128,15 +129,12 @@ function calculatedata(data) {
     let minmaxareactrl=[]
 
 
-    let datanames = ["min","max","trimmedmin","trimmedmax","avg","trimmedarea","minmaxarea"]
-
-    for (let i = 0; i < data[0].data[0].data.length; i++) {
-        data.forEach((z)=>{
-            let name = z.data[0].metadata.name
-            if (!datanames.includes(name)){
+    for (let i = 0; i < data[0].data[0].data.length; i++) {     //iterate over each bucket, using the first series as control
+        let ctrlarray = []
+        data.forEach((z,idx)=>{
+            if (idx > 0) { //we dont want to include the most recent series in the data
                 ctrlarray.push(z.data[0].data[i].y)
-            }
-           
+             }  
         })
         let avgarr =  []
 
@@ -149,15 +147,13 @@ function calculatedata(data) {
         let minmaxmaxs = []
         
         resultarray.push(ctrlarray)
-        ctrlarray = []
-        console.log("my arrays",resultarray)
+  
         resultarray.forEach((array,idx) => {
             let minValue = Infinity;
             let maxValue = -Infinity;
-            // if (idx > 0){
-            //     console.log(idx)
+
+
                 for (let item of array) {
-        
                     // Find minimum value
                     if (item < minValue)
                         minValue = item;
@@ -180,7 +176,6 @@ function calculatedata(data) {
                 minmaxmins.push(minValue)
                 minmaxmaxs.push(maxValue)
                 minmaxarea.push([minValue,maxValue])       
-            // }
                
         })
 
@@ -251,6 +246,7 @@ function AlignedTimeseries(props) {
             avgbol = props.nrqlQueries[0].average
             minmaxareabol = props.nrqlQueries[0].minmaxareabol
             trimmedareabol = props.nrqlQueries[0].trimmedareabol
+            clippedareabol = props.nrqlQueries[0].clippedareabol
             hideoriginaldata = props.nrqlQueries[0].hideoriginaldata
             if (platformstatecontext.timeRange != undefined) {
                 if (platformstatecontext.timeRange.duration == null){
@@ -313,7 +309,7 @@ function AlignedTimeseries(props) {
                 count ++
             })
             calculatedata(data)
-            console.log("calculate data")
+
             setQueryResults(data)
 
 
@@ -386,14 +382,13 @@ function AlignedTimeseries(props) {
         // convert unix timestamps to date time
         unixtodatetime(queryResults)
 
-        //determine latest result set, we'll align everything to that one
         let vizchartData=[]
         let exportchartData=[]
         let linechartdata = []
         let arechartdata = []
 
-        queryResults.forEach(r=>{ if(r.data && r.data[0] && r.data[0].metadata.name != "trimmedarea" && r.data[0].metadata.name != "minmaxarea") {exportchartData.push(r.data[0])}}) 
-        queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name != "min" && r.data[0].metadata.name != "max" && r.data[0].metadata.name != "trimmedmin" && r.data[0].metadata.name != "trimmedmax" && r.data[0].metadata.name != "avg" && r.data[0].metadata.name != "trimmedarea" && r.data[0].metadata.name != "minmaxarea") ){vizchartData.push(r.data[0])}}) 
+        queryResults.forEach(r=>{ if(r.data && r.data[0] && r.data[0].metadata.name != "trimmedarea" && r.data[0].metadata.name != "minmaxarea" && r.data[0].metadata.name != "clippedarea") {exportchartData.push(r.data[0])}}) 
+        queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name != "min" && r.data[0].metadata.name != "max" && r.data[0].metadata.name != "trimmedmin" && r.data[0].metadata.name != "trimmedmax" && r.data[0].metadata.name != "avg" && r.data[0].metadata.name != "trimmedarea" && r.data[0].metadata.name != "minmaxarea" && r.data[0].metadata.name != "clippedarea") ){vizchartData.push(r.data[0])}}) 
         
         if( avgbol == true ) {
             queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "avg") ){linechartdata.push(r.data[0])}})
@@ -406,6 +401,11 @@ function AlignedTimeseries(props) {
         if( minmaxareabol == true ) {
             queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "minmaxarea") ){arechartdata.push(r.data[0])}})
         }
+
+        if( clippedareabol == true ) {
+            queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "clippedarea") ){arechartdata.push(r.data[0])}})
+        }
+        
 
         if (hideoriginaldata == true ) {
             vizchartData=[vizchartData[0]]
