@@ -74,8 +74,10 @@ function unixtodatetime(data) {
     })
 }
  
-function exportToCsv (data){
-    console.log(data)
+function exportToCsv (querydata){
+    let data=[]
+    querydata.forEach(r=>{ if(r.data && r.data[0] && r.data[0].metadata.name != "trimmedarea" && r.data[0].metadata.name != "minmaxarea" && r.data[0].metadata.name != "clippedarea") {data.push(r.data[0])}}) 
+    console.log("current export when function was called",querydata)
     let newdata = []
 
     data.forEach(el => {
@@ -281,7 +283,9 @@ function AlignedTimeseries(props) {
     const {nrqlQueries, alignment} = props;
     const [queryResults, setQueryResults] = useState(null);
     const cplatformstatecontext = useContext(PlatformStateContext);
-    console.log("running ctx is ", cplatformstatecontext)
+    // console.log("running ctx is ", cplatformstatecontext)
+
+
 
     useEffect(async () => {      
             let windowsize
@@ -310,20 +314,14 @@ function AlignedTimeseries(props) {
                         if (i == 0 ) { 
                             let from = parseInt((cplatformstatecontext.timeRange.end_time) - windowsize)
                             let until = parseInt(cplatformstatecontext.timeRange.end_time)
-                            // console.log("from",parse_time_string(from))
-                            // console.log("until",parse_time_string(until))
                             let query = mainquery + " SINCE " + from + " until "+ until  + " TIMESERIES " + timeseries
                             props.nrqlQueries[0].query = query
                         } else {
                             let from = parseInt(cplatformstatecontext.timeRange.end_time-(windowsize*(i+1)))
                             let until = parseInt(cplatformstatecontext.timeRange.end_time-windowsize*(i))
-                            // console.log("from",i,parse_time_string(from))
-                            // console.log("until",i,parse_time_string(until))
                             let query = mainquery + " SINCE " + from + " until "+ until + " TIMESERIES " + timeseries
                             nrqlQueries.push({accountId: c_accountid, query: query, color: defaultColors[Math.floor(Math.random() * defaultColors.length)]})
                             
-                            // console.log("until1",parse_time_string(until))
-                            // console.log("query1 ", query)
                         }                
                     }
                 } else {
@@ -365,7 +363,7 @@ function AlignedTimeseries(props) {
                 console.log(e)
             }
 
-            console.log(data)
+            // console.log(data)
             // name the queries and update the colours
             let count = 1
             data.forEach(el => {
@@ -394,6 +392,10 @@ function AlignedTimeseries(props) {
 
         // return () => clearInterval(interval);            
      },[props]);
+
+    const dataFromState = () => {
+        return queryResults;
+    }
 
     
     if (globalerror != undefined){
@@ -448,11 +450,11 @@ function AlignedTimeseries(props) {
         unixtodatetime(queryResults)
 
         let vizchartData=[]
-        let exportchartData=[]
+        // let exportchartData=[]
         let linechartdata = []
         let arechartdata = []
 
-        queryResults.forEach(r=>{ if(r.data && r.data[0] && r.data[0].metadata.name != "trimmedarea" && r.data[0].metadata.name != "minmaxarea" && r.data[0].metadata.name != "clippedarea") {exportchartData.push(r.data[0])}}) 
+        // queryResults.forEach(r=>{ if(r.data && r.data[0] && r.data[0].metadata.name != "trimmedarea" && r.data[0].metadata.name != "minmaxarea" && r.data[0].metadata.name != "clippedarea") {exportchartData.push(r.data[0])}}) 
         queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name != "min" && r.data[0].metadata.name != "max" && r.data[0].metadata.name != "trimmedmin" && r.data[0].metadata.name != "trimmedmax" && r.data[0].metadata.name != "avg" && r.data[0].metadata.name != "trimmedarea" && r.data[0].metadata.name != "minmaxarea" && r.data[0].metadata.name != "clippedarea" && r.data[0].metadata.name != "clippedmin" && r.data[0].metadata.name != "clippedmax") ){vizchartData.push(r.data[0])}}) 
         
         if( avgbol == true ) {
@@ -471,15 +473,14 @@ function AlignedTimeseries(props) {
             queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "clippedarea") ){arechartdata.push(r.data[0])}})
         }
         
-
         if (hideoriginaldata == true ) {
             vizchartData=[vizchartData[0]]
         }
      
+        let c_data = dataFromState()
         let outTable= <>
-        <CSVLink filename="QueryData.csv" data={exportToCsv(exportchartData)}>Download data as CSV</CSVLink>
+        <CSVLink filename="QueryData.csv" data={exportToCsv(c_data)}>Download data as CSV</CSVLink>
         </>
-        
         return <AutoSizer>
             {({ width, height }) => (<div style={{ height, width }}>
             <ComposedChart width={width-15} height={height-15} margin={{top: 10, right: 10, bottom: 0, left: 0}}>
