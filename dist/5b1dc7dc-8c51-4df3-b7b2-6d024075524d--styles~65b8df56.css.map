@@ -1,1 +1,0 @@
-{"version":3,"sources":["webpack:///./tmp/5b1dc7dc-8c51-4df3-b7b2-6d024075524d-styles.1696576719541.scss"],"names":[],"mappings":"AAAA;EACE,iBAAkB;AACpB;;AAEA;EACE,cAAe;AACjB,C","file":"5b1dc7dc-8c51-4df3-b7b2-6d024075524d--styles~65b8df56.css","sourcesContent":[".EmptyState {\n  text-align: center;\n}\n\n.loader {\n  margin-top: 25%;\n}"],"sourceRoot":""}

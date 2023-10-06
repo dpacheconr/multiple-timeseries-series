@@ -77,7 +77,7 @@ function unixtodatetime(data) {
 function exportToCsv (querydata){
     let data=[]
     querydata.forEach(r=>{ if(r.data && r.data[0] && r.data[0].metadata.name != "trimmedarea" && r.data[0].metadata.name != "minmaxarea" && r.data[0].metadata.name != "clippedarea") {data.push(r.data[0])}}) 
-    console.log("current export when function was called",querydata)
+    // console.log("current export when function was called",data)
     let newdata = []
 
     data.forEach(el => {
@@ -194,28 +194,32 @@ function calculatedata(data) {
             let minValue = minMax[0]
             let maxValue =  minMax[1]
 
-                avgarr.push(avgfunction(yvalues))
+            avgarr.push(avgfunction(yvalues))
 
-                let mins = parseInt(((maxValue - minValue)*(trimpercent/100))+minValue)
-                let maxs = parseInt(maxValue - ((maxValue - minValue)*(trimpercent/100)))
-    
-    
-                trimmedmin.push(mins)
-                trimmedmax.push(maxs)
-                trimmedarea.push([mins,maxs])
-    
-                minmaxmins.push(minValue)
-                minmaxmaxs.push(maxValue)
-                minmaxarea.push([minValue,maxValue])       
+            let mins = parseInt(((maxValue - minValue)*(trimpercent/100))+minValue)
+            let maxs = parseInt(maxValue - ((maxValue - minValue)*(trimpercent/100)))
+            
+            if (trimpercent == undefined){
+                trimpercent = 10
+            }
+            if (clipSize == undefined){
+                clipSize = 2
+            }
 
+            trimmedmin.push(mins)
+            trimmedmax.push(maxs)
+            trimmedarea.push([mins,maxs])
 
-                //determine clipped area
-                let clippedData=clipFunction(yvalues,parseInt(clipSize))
-                let c_area = getMinMax(clippedData)
-                clippedarea.push(c_area)
-                clippedmin.push(c_area[0])
-                clippedmax.push(c_area[1])
+            minmaxmins.push(minValue)
+            minmaxmaxs.push(maxValue)
+            minmaxarea.push([minValue,maxValue])       
 
+            //determine clipped area
+            let clippedData=clipFunction(yvalues,parseInt(clipSize))
+            let c_area = getMinMax(clippedData)
+            clippedarea.push(c_area)
+            clippedmin.push(c_area[0])
+            clippedmax.push(c_area[1])
 
         })
 
@@ -248,7 +252,6 @@ function calculatedata(data) {
     let clippedareaset = parse_data(clippedareactrl)
     let clippedminset = parse_data(clippedminctrl)
     let clippedmaxset = parse_data(clippedmaxctrl)
-
 
 
     // update queries with calculated data
@@ -450,11 +453,11 @@ function AlignedTimeseries(props) {
         unixtodatetime(queryResults)
 
         let vizchartData=[]
-        // let exportchartData=[]
+        let exportchartData=[]
         let linechartdata = []
         let arechartdata = []
 
-        // queryResults.forEach(r=>{ if(r.data && r.data[0] && r.data[0].metadata.name != "trimmedarea" && r.data[0].metadata.name != "minmaxarea" && r.data[0].metadata.name != "clippedarea") {exportchartData.push(r.data[0])}}) 
+        queryResults.forEach(r=>{ if(r.data && r.data[0] && r.data[0].metadata.name != "trimmedarea" && r.data[0].metadata.name != "minmaxarea" && r.data[0].metadata.name != "clippedarea") {exportchartData.push(r.data[0])}}) 
         queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name != "min" && r.data[0].metadata.name != "max" && r.data[0].metadata.name != "trimmedmin" && r.data[0].metadata.name != "trimmedmax" && r.data[0].metadata.name != "avg" && r.data[0].metadata.name != "trimmedarea" && r.data[0].metadata.name != "minmaxarea" && r.data[0].metadata.name != "clippedarea" && r.data[0].metadata.name != "clippedmin" && r.data[0].metadata.name != "clippedmax") ){vizchartData.push(r.data[0])}}) 
         
         if( avgbol == true ) {
@@ -476,7 +479,6 @@ function AlignedTimeseries(props) {
         if (hideoriginaldata == true ) {
             vizchartData=[vizchartData[0]]
         }
-     
         let c_data = dataFromState()
         let outTable= <>
         <CSVLink filename="QueryData.csv" data={exportToCsv(c_data)}>Download data as CSV</CSVLink>
