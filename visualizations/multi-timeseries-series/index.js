@@ -254,21 +254,33 @@ function calculatedata(data) {
     let clippedmaxset = parse_data(clippedmaxctrl)
 
 
+    // // update queries with calculated data
+    // data.push({"data":[{"data":avgset, "metadata":{"viz":"main","name": "avg","id":"74B5B05EEA583471E03DCBF0123D81CC79CAE0FE9", "color": defaultColors[1]}}],loading: false, error: null})
+    // data.push({"data":[{"data":trimmedareaset, "metadata":{"viz":"main","name": "trimmedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CEE0FE9", "color":defaultColors[2]}}],loading: false, error: null})
+    // data.push({"data":[{"data":trimmedminset, "metadata":{"viz":"main","name": "trimmedmin","id":"02D6A84F7B97E4709A11276615FDAAB3EE2BEE415", "color": defaultColors[2]}}],loading: false, error: null})
+    // data.push({"data":[{"data":trimmedmaxset, "metadata":{"viz":"main","name": "trimmedmax","id":"2C1F4F2BAA2800FD80F50C3811F38D03B52DEEEB1", "color":defaultColors[2]}}],loading: false, error: null})
+    // data.push({"data":[{"data":clippedareaset, "metadata":{"viz":"main","name": "clippedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0JE8", "color": defaultColors[10]}}],loading: false, error: null})
+    // data.push({"data":[{"data":clippedminset, "metadata":{"viz":"main","name": "clippedmin","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0LE8", "color": defaultColors[10]}}],loading: false, error: null})
+    // data.push({"data":[{"data":clippedmaxset, "metadata":{"viz":"main","name": "clippedmax","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE8", "color": defaultColors[10]}}],loading: false, error: null})
+    // data.push({"data":[{"data":minmaxareaset, "metadata":{"viz":"main","name": "minmaxarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE9", "color": defaultColors[11]}}],loading: false, error: null})
+    // data.push({"data":[{"data":minset, "metadata":{"viz":"main","name": "min","id":"625D011FAC794651F25160AD89612DFAAE954C0CB", "color":defaultColors[11]}}],loading: false, error: null})
+    // data.push({"data":[{"data":maxset, "metadata":{"viz":"main","name": "max","id":"DDB4E3844C923B3F794EC52642E22CBE9FC8D8D31", "color": defaultColors[11]}}],loading: false, error: null})
+   
     // update queries with calculated data
     data.push({"data":[{"data":avgset, "metadata":{"viz":"main","name": "avg","id":"74B5B05EEA583471E03DCBF0123D81CC79CAE0FE9", "color": defaultColors[1]}}],loading: false, error: null})
-    data.push({"data":[{"data":trimmedareaset, "metadata":{"viz":"main","name": "trimmedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CEE0FE9", "color":defaultColors[2]}}],loading: false, error: null})
+    data.push({"data":[{"data":trimmedareaset, "metadata":{"viz":"main","name": "trimmedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CEE0FE9", "color":'#0262BC66'}}],loading: false, error: null})
     data.push({"data":[{"data":trimmedminset, "metadata":{"viz":"main","name": "trimmedmin","id":"02D6A84F7B97E4709A11276615FDAAB3EE2BEE415", "color": defaultColors[2]}}],loading: false, error: null})
     data.push({"data":[{"data":trimmedmaxset, "metadata":{"viz":"main","name": "trimmedmax","id":"2C1F4F2BAA2800FD80F50C3811F38D03B52DEEEB1", "color":defaultColors[2]}}],loading: false, error: null})
-    data.push({"data":[{"data":clippedareaset, "metadata":{"viz":"main","name": "clippedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0JE8", "color": defaultColors[10]}}],loading: false, error: null})
+    data.push({"data":[{"data":clippedareaset, "metadata":{"viz":"main","name": "clippedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0JE8", "color": '#22DC6499'}}],loading: false, error: null})
     data.push({"data":[{"data":clippedminset, "metadata":{"viz":"main","name": "clippedmin","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0LE8", "color": defaultColors[10]}}],loading: false, error: null})
     data.push({"data":[{"data":clippedmaxset, "metadata":{"viz":"main","name": "clippedmax","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE8", "color": defaultColors[10]}}],loading: false, error: null})
-    data.push({"data":[{"data":minmaxareaset, "metadata":{"viz":"main","name": "minmaxarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE9", "color": defaultColors[11]}}],loading: false, error: null})
+    data.push({"data":[{"data":minmaxareaset, "metadata":{"viz":"main","name": "minmaxarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE9", "color": '#66666666'}}],loading: false, error: null})
     data.push({"data":[{"data":minset, "metadata":{"viz":"main","name": "min","id":"625D011FAC794651F25160AD89612DFAAE954C0CB", "color":defaultColors[11]}}],loading: false, error: null})
     data.push({"data":[{"data":maxset, "metadata":{"viz":"main","name": "max","id":"DDB4E3844C923B3F794EC52642E22CBE9FC8D8D31", "color": defaultColors[11]}}],loading: false, error: null})
    
 }
 
-const duration = 60*60*1000
+const duration = 60*60*24*1*1000
 const enddate =  Date.now() - duration
 const startdate = enddate - duration
 
@@ -276,7 +288,7 @@ const startdate = enddate - duration
 const timeRange = {
     begin_time: startdate,
     duration: null, 
-    end_time: enddate
+    end_time: (1696633199)*1000
   };
   
 // Often provided by the PlatformState provider
@@ -285,7 +297,8 @@ const ctx = {tvMode: false, accountId: c_accountid, filters: undefined, timeRang
 function AlignedTimeseries(props) {
     const {nrqlQueries, alignment} = props;
     const [queryResults, setQueryResults] = useState(null);
-    const cplatformstatecontext = useContext(PlatformStateContext);
+    const cplatformstatecontext = ctx
+    // useContext(PlatformStateContext);
     // console.log("running ctx is ", cplatformstatecontext)
 
 
@@ -372,7 +385,7 @@ function AlignedTimeseries(props) {
             data.forEach(el => {
                 if (count != 1){
                     el.data[0].metadata.name = data[0].data[0].metadata.name+(count-1)
-                    el.data[0].metadata.color = defaultColors[Math.floor(Math.random() * defaultColors.length)]
+                    el.data[0].metadata.color = defaultColors[count]
                 }
                 count ++
             })
@@ -380,20 +393,20 @@ function AlignedTimeseries(props) {
             calculatedata(data)
             setQueryResults(data)
 
-            // let refreshratems
-            // if (timeseries.includes("second")) { // if the window size is 1 hour or more
-            //     refreshratems = 10*1000 // 10 seconds in ms
-            // } else if (timeseries.includes("minute")) {
-            //     refreshratems = 30*1000 // 30 seconds in ms
-            // } else if (timeseries.includes("hour") || timeseries.includes("week")) { 
-            //     refreshratems = 1800*1000 // 30 minutes   
-            // } else {
-            //     refreshratems = 5*1000 // 5 seconds in ms
-            // }
+            let refreshratems
+            if (timeseries.includes("second")) { // if the window size is 1 hour or more
+                refreshratems = 10*1000 // 10 seconds in ms
+            } else if (timeseries.includes("minute")) {
+                refreshratems = 30*1000 // 30 seconds in ms
+            } else if (timeseries.includes("hour") || timeseries.includes("week")) { 
+                refreshratems = 1800*1000 // 30 minutes   
+            } else {
+                refreshratems = 5*1000 // 5 seconds in ms
+            }
 
-            // const interval = setInterval(() => {console.log("Will refresh the data again in ",refreshratems);setQueryResults(data);}, refreshratems);
+            const interval = setInterval(() => {console.log("Will refresh the data again in ",refreshratems);setQueryResults(data);}, refreshratems);
 
-        // return () => clearInterval(interval);            
+        return () => clearInterval(interval);            
      },[props]);
 
     const dataFromState = () => {
@@ -485,19 +498,19 @@ function AlignedTimeseries(props) {
         </>
         return <AutoSizer>
             {({ width, height }) => (<div style={{ height, width }}>
-            <ComposedChart width={width-15} height={height-15} margin={{top: 10, right: 10, bottom: 0, left: 0}}>
+            <ComposedChart width={width} height={height} margin={{top: 10, right: 10, bottom: 0, left: 0}}>
           <CartesianGrid strokeDasharray="3 3" /> 
           <XAxis dataKey="x"  type="category"  allowDuplicatedCategory={false}/>
-          <YAxis  dataKey="y" type="number" domain={['datamin - 10', 'dataMax + 10']} />
+          <YAxis dataKey="y" type="number" interval="equidistantPreserveStart" />
           <Tooltip />
           <Legend />
-          {vizchartData.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>
-          ))
-          }
           {
           linechartdata.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={5} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>))
           }   
           {arechartdata.map((s) => (<Area type="monotone" fill={s.metadata.color} dataKey="y" data={s.data}  name={s.metadata.name} strokeWidth={0} key={s.metadata.name}/>))}
+          {vizchartData.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>
+          ))
+          }
         </ComposedChart>
         <Grid>
             <GridItem columnSpan={12}>

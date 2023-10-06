@@ -20,7 +20,15 @@
                     "title": "Query",
                     "description": "NRQL query for visualization",
                     "type": "nrql"
-                },
+                }
+            ]
+        },
+        {
+            "name": "configuration",
+            "title": "Configuration",
+            "description": "How the timeseries should be aligned",
+            "type": "enum",
+            "items": [
                 {
                     "name": "compare",
                     "title": "Compare",
@@ -81,7 +89,7 @@
                     "title": "Clip size",
                     "description": "Number of pointsto clip from data set",
                     "type": "string"
-                }
+                }  
             ]
         },
         {
