@@ -275,19 +275,8 @@ function calculatedata(data) {
    
 }
 
-const duration = 60*60*24*1*1000
-const enddate =  Date.now() - duration
-const startdate = enddate - duration
 
-// // Often provided by the PlatformState provider
-const timeRange = {
-    begin_time: startdate,
-    duration: null, 
-    end_time: enddate
-  };
-  
-// Often provided by the PlatformState provider
-const ctx = {tvMode: false, accountId: c_accountid, filters: undefined, timeRange: timeRange}
+
 
 function AlignedTimeseries(props) {
     const {
@@ -302,10 +291,69 @@ function AlignedTimeseries(props) {
         conf_trimpercent,
         conf_clippedareabol,
         conf_clipsize,
-        conf_alignment
+        conf_alignment,
+        conf_startunixtime,
+        conf_endunixtime,
+        conf_duration,
+        conf_refreshrate
     
     } = props;
     const [queryResults, setQueryResults] = useState(null);
+
+
+    let timeRange;
+    let overrideTimePicker=false;
+
+    //determine time window overrides
+    if(conf_startunixtime!=="" && conf_endunixtime!=="") {     //start and end time provided
+        timeRange = {
+            begin_time: parseInt(conf_startunixtime)*1000,
+            duration: null, 
+            end_time: parseInt(conf_endunixtime)*1000
+        };
+        overrideTimePicker=true;
+    } else if(conf_startunixtime!=="" && conf_duration!=="") {  // start and duration provided
+        timeRange = {
+            begin_time: parseInt(conf_startunixtime)*1000,
+            duration: null, 
+            end_time: (parseInt(conf_startunixtime)+parseInt(conf_duration))*1000
+        };
+
+        overrideTimePicker=true;
+    } else if(conf_endunixtime!=="" && conf_duration!=="") { // end and duration provided
+        timeRange = {
+            begin_time: (parseInt(conf_endunixtime)-parseInt(conf_duration)) *1000,
+            duration: null, 
+            end_time: parseInt(conf_endunixtime*1000)
+        };
+        overrideTimePicker=true;
+    }
+    else if(conf_duration!=="") { // just duration provided, assume thats a since duration time ago until now
+        timeRange = {
+            begin_time: null,
+            duration: parseInt(conf_duration) * 1000, 
+            end_time: null
+        };
+        overrideTimePicker=true;
+    } else {
+        //hard coded defaults
+        const duration = 60*60*24*1*1000
+        const enddate =  Date.now() - duration
+        const startdate = enddate - duration
+    
+        // // Often provided by the PlatformState provider
+        timeRange = {
+            begin_time: startdate,
+            duration: null, 
+            end_time: enddate
+        };
+
+    }
+
+
+
+    // Often provided by the PlatformState provider, but not when in first creation mode
+    const ctx = {tvMode: false, accountId: c_accountid, filters: undefined, timeRange: timeRange}
     const cplatformstatecontext = ctx
     // useContext(PlatformStateContext);
     // console.log("running ctx is ", cplatformstatecontext)
@@ -325,25 +373,26 @@ function AlignedTimeseries(props) {
             if (conf_clipsize != "") {
                 clipSize = conf_clipsize
             }
+
+            if(overrideTimePicker) { // if a fixed window has been provided then we use that instead of any values delivered via the time picker.
+                cplatformstatecontext.timeRange = timeRange
+            }
             if (cplatformstatecontext.timeRange != undefined) {
-                if (cplatformstatecontext.timeRange.duration == null){
-                    windowsize = (parseInt(cplatformstatecontext.timeRange.end_time) - parseInt(cplatformstatecontext.timeRange.begin_time)) / 1000
-                    windowsize = windowsize*1000
+
+                if (cplatformstatecontext.timeRange.duration == null){ //timepicker chosen start and end time
+                    windowsize = (parseInt(cplatformstatecontext.timeRange.end_time) - parseInt(cplatformstatecontext.timeRange.begin_time))
                     for (let i = 0; i <= conf_compare; i++) {
+                        let from = (cplatformstatecontext.timeRange.end_time) - (windowsize * (i+1))
+                        let until = (cplatformstatecontext.timeRange.end_time) - (windowsize * (i))
+                        let query = mainquery + " SINCE " + from + " until "+ until  + " TIMESERIES " + conf_timeseries
                         if (i == 0 ) { 
-                            let from = parseInt((cplatformstatecontext.timeRange.end_time) - windowsize)
-                            let until = parseInt(cplatformstatecontext.timeRange.end_time)
-                            let query = mainquery + " SINCE " + from + " until "+ until  + " TIMESERIES " + conf_timeseries
-                            nrqlQueries[0].query = query
+                            nrqlQueries[0].query = query  
                         } else {
-                            let from = parseInt(cplatformstatecontext.timeRange.end_time-(windowsize*(i+1)))
-                            let until = parseInt(cplatformstatecontext.timeRange.end_time-windowsize*(i))
-                            let query = mainquery + " SINCE " + from + " until "+ until + " TIMESERIES " + conf_timeseries
-                            nrqlQueries.push({accountId: c_accountid, query: query, color: defaultColors[Math.floor(Math.random() * defaultColors.length)]})
-                            
+                            nrqlQueries.push({accountId: c_accountid, query: query, color: defaultColors[Math.floor(Math.random() * defaultColors.length)]}) 
                         }                
                     }
-                } else {
+
+                } else { //timpicker is relative choice (e.g since 7 days ago)
                   windowsize = parseInt(cplatformstatecontext.timeRange.duration) / 1000
                   for (let i = 0; i <= conf_compare; i++) {
                     let query = mainquery + " SINCE " + (parseInt(windowsize)*(i+1))  + " seconds ago " + " until "+ (parseInt(windowsize)*(i))  + " seconds ago TIMESERIES " + conf_timeseries
@@ -356,7 +405,7 @@ function AlignedTimeseries(props) {
                 }
                 }
                 
-            } else {
+            } else { //default if nothing is chosen in picker, but picker present (default)
                 windowsize = 1800 // defaults to 30 minutes
                 for (let i = 0; i <= conf_compare; i++) {
                     let query = mainquery + " SINCE " + (parseInt(windowsize)*(i+1))  + " seconds ago " + " until "+ (parseInt(windowsize)*(i))  + " seconds ago TIMESERIES " + conf_timeseries
@@ -382,7 +431,6 @@ function AlignedTimeseries(props) {
                 console.log(e)
             }
 
-            // console.log(data)
             // name the queries and update the colours
             let count = 1
             data.forEach(el => {
@@ -396,18 +444,23 @@ function AlignedTimeseries(props) {
             calculatedata(data)
             setQueryResults(data)
 
-            let refreshratems
-            if (conf_timeseries.includes("second")) { // if the window size is 1 hour or more
-                refreshratems = 10*1000 // 10 seconds in ms
-            } else if (conf_timeseries.includes("minute")) {
-                refreshratems = 30*1000 // 30 seconds in ms
-            } else if (conf_timeseries.includes("hour") || conf_timeseries.includes("week")) { 
-                refreshratems = 1800*1000 // 30 minutes   
-            } else {
-                refreshratems = 5*1000 // 5 seconds in ms
-            }
 
-            const interval = setInterval(() => {console.log("Will refresh the data again in ",refreshratems);setQueryResults(data);}, refreshratems);
+            let refreshratems = conf_refreshrate==="" ? null : parseInt(conf_refreshrate)*1000
+            if(refreshratems === null ) {
+                if (conf_timeseries.includes("second")) { // if the window size is 1 hour or more
+                    refreshratems = 10*1000 // 10 seconds in ms
+                } else if (conf_timeseries.includes("minute")) {
+                    refreshratems = 30*1000 // 30 seconds in ms
+                } else if (conf_timeseries.includes("hour") || conf_timeseries.includes("week")) { 
+                    refreshratems = 1800*1000 // 30 minutes   
+                } else {
+                    refreshratems = 5*1000 // 5 seconds in ms
+                }
+            }
+            if(refreshratems>0) {
+                setInterval(() => {console.log("Will refresh the data again in ",refreshratems);setQueryResults(data);}, refreshratems);
+            }
+            
 
         return () => clearInterval(interval);            
      },[props]);

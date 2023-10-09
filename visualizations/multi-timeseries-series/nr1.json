@@ -17,6 +17,24 @@
             "type": "nrql"
         },
         {
+            "name": "conf_startunixtime",
+            "title": "Start (unixtime seconds)",
+            "description": "Latest period start time",
+            "type": "number"
+        },
+        {
+            "name": "conf_endunixtime",
+            "title": "End (unixtime seconds)",
+            "description": "Latest period end time",
+            "type": "number"
+        },
+        {
+            "name": "conf_duration",
+            "title": "Duration (seconds)",
+            "description": "Duration",
+            "type": "number"
+        },
+        {
             "name": "conf_compare",
             "title": "Compare",
             "description": "Number minutes/hours/days/weeks to compare",
@@ -68,6 +86,12 @@
             "name": "conf_clipsize",
             "title": "Clip size",
             "description": "Number of pointsto clip from data set",
+            "type": "string"
+        },
+        {
+            "name": "conf_refreshrate",
+            "title": "Refresh rate (s)",
+            "description": "Leave blank to auto refresh, set to zero to disable refresh, otherwise set number of seconds to wait before refresh.",
             "type": "string"
         },
         {
