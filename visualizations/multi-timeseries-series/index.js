@@ -12,10 +12,6 @@ let c_accountid
 let trimpercent = 10
 let clipSize=1
 let avgbol = false
-let minmaxareabol = false
-let trimmedareabol = false
-let clippedareabol = false
-let hideoriginaldata = false
 let globalerror
 
 
@@ -111,7 +107,6 @@ function exportToCsv (querydata){
     sorteddata.sort(function(a, b) {
         var keyA = a.x,
           keyB = b.x;
-        // Compare the 2
         if (keyA < keyB) return -1;
         if (keyA > keyB) return 1;
         return 0;
@@ -288,14 +283,28 @@ const startdate = enddate - duration
 const timeRange = {
     begin_time: startdate,
     duration: null, 
-    end_time: (1696633199)*1000
+    end_time: enddate
   };
   
 // Often provided by the PlatformState provider
 const ctx = {tvMode: false, accountId: c_accountid, filters: undefined, timeRange: timeRange}
 
 function AlignedTimeseries(props) {
-    const {nrqlQueries, alignment} = props;
+    const {
+        conf_accountId,
+        conf_query,
+        conf_compare,
+        conf_timeseries,
+        conf_hideoriginaldata,
+        conf_average,
+        conf_minmaxareabol,
+        conf_trimmedareabol,
+        conf_trimpercent,
+        conf_clippedareabol,
+        conf_clipsize,
+        conf_alignment
+    
+    } = props;
     const [queryResults, setQueryResults] = useState(null);
     const cplatformstatecontext = ctx
     // useContext(PlatformStateContext);
@@ -305,47 +314,41 @@ function AlignedTimeseries(props) {
 
     useEffect(async () => {      
             let windowsize
-            c_accountid = props.nrqlQueries[0].accountId
-            let mainquery = props.nrqlQueries[0].query
-            let compare= props.nrqlQueries[0].compare
-            let timeseries= props.nrqlQueries[0].timeseries
-            avgbol = props.nrqlQueries[0].average
-            minmaxareabol = props.nrqlQueries[0].minmaxareabol
-            trimmedareabol = props.nrqlQueries[0].trimmedareabol
-            clippedareabol = props.nrqlQueries[0].clippedareabol
-            hideoriginaldata = props.nrqlQueries[0].hideoriginaldata
+            c_accountid = conf_accountId
+            let mainquery = conf_query
+            avgbol = conf_average
+            let nrqlQueries = [{accountId: c_accountid, query: conf_query, color: defaultColors[Math.floor(Math.random() * defaultColors.length)]} ]
 
-            if (props.nrqlQueries[0].trimpercent != "") {
-                trimpercent = props.nrqlQueries[0].trimpercent
+            if (conf_trimpercent != "") {
+                trimpercent = conf_trimpercent
             }
-            if (props.nrqlQueries[0].clipsize != "") {
-                clipSize = props.nrqlQueries[0].clipsize
+            if (conf_clipsize != "") {
+                clipSize = conf_clipsize
             }
-            
             if (cplatformstatecontext.timeRange != undefined) {
                 if (cplatformstatecontext.timeRange.duration == null){
                     windowsize = (parseInt(cplatformstatecontext.timeRange.end_time) - parseInt(cplatformstatecontext.timeRange.begin_time)) / 1000
                     windowsize = windowsize*1000
-                    for (let i = 0; i <= compare; i++) {
+                    for (let i = 0; i <= conf_compare; i++) {
                         if (i == 0 ) { 
                             let from = parseInt((cplatformstatecontext.timeRange.end_time) - windowsize)
                             let until = parseInt(cplatformstatecontext.timeRange.end_time)
-                            let query = mainquery + " SINCE " + from + " until "+ until  + " TIMESERIES " + timeseries
-                            props.nrqlQueries[0].query = query
+                            let query = mainquery + " SINCE " + from + " until "+ until  + " TIMESERIES " + conf_timeseries
+                            nrqlQueries[0].query = query
                         } else {
                             let from = parseInt(cplatformstatecontext.timeRange.end_time-(windowsize*(i+1)))
                             let until = parseInt(cplatformstatecontext.timeRange.end_time-windowsize*(i))
-                            let query = mainquery + " SINCE " + from + " until "+ until + " TIMESERIES " + timeseries
+                            let query = mainquery + " SINCE " + from + " until "+ until + " TIMESERIES " + conf_timeseries
                             nrqlQueries.push({accountId: c_accountid, query: query, color: defaultColors[Math.floor(Math.random() * defaultColors.length)]})
                             
                         }                
                     }
                 } else {
                   windowsize = parseInt(cplatformstatecontext.timeRange.duration) / 1000
-                  for (let i = 0; i <= compare; i++) {
-                    let query = mainquery + " SINCE " + (parseInt(windowsize)*(i+1))  + " seconds ago " + " until "+ (parseInt(windowsize)*(i))  + " seconds ago TIMESERIES " + timeseries
+                  for (let i = 0; i <= conf_compare; i++) {
+                    let query = mainquery + " SINCE " + (parseInt(windowsize)*(i+1))  + " seconds ago " + " until "+ (parseInt(windowsize)*(i))  + " seconds ago TIMESERIES " + conf_timeseries
                     if (i == 0 ) {
-                        props.nrqlQueries[0].query = query
+                        nrqlQueries[0].query = query
                     } else {
                         nrqlQueries.push({accountId: c_accountid, query: query, color: defaultColors[Math.floor(Math.random() * defaultColors.length)]})
                     
@@ -355,10 +358,10 @@ function AlignedTimeseries(props) {
                 
             } else {
                 windowsize = 1800 // defaults to 30 minutes
-                for (let i = 0; i <= compare; i++) {
-                    let query = mainquery + " SINCE " + (parseInt(windowsize)*(i+1))  + " seconds ago " + " until "+ (parseInt(windowsize)*(i))  + " seconds ago TIMESERIES " + timeseries
+                for (let i = 0; i <= conf_compare; i++) {
+                    let query = mainquery + " SINCE " + (parseInt(windowsize)*(i+1))  + " seconds ago " + " until "+ (parseInt(windowsize)*(i))  + " seconds ago TIMESERIES " + conf_timeseries
                     if (i == 0 ) {
-                        props.nrqlQueries[0].query = query
+                        nrqlQueries[0].query = query
                     } else {
                         nrqlQueries.push({accountId: c_accountid, query: query, color: defaultColors[Math.floor(Math.random() * defaultColors.length)]})
                     
@@ -394,11 +397,11 @@ function AlignedTimeseries(props) {
             setQueryResults(data)
 
             let refreshratems
-            if (timeseries.includes("second")) { // if the window size is 1 hour or more
+            if (conf_timeseries.includes("second")) { // if the window size is 1 hour or more
                 refreshratems = 10*1000 // 10 seconds in ms
-            } else if (timeseries.includes("minute")) {
+            } else if (conf_timeseries.includes("minute")) {
                 refreshratems = 30*1000 // 30 seconds in ms
-            } else if (timeseries.includes("hour") || timeseries.includes("week")) { 
+            } else if (conf_timeseries.includes("hour") || conf_timeseries.includes("week")) { 
                 refreshratems = 1800*1000 // 30 minutes   
             } else {
                 refreshratems = 5*1000 // 5 seconds in ms
@@ -418,7 +421,7 @@ function AlignedTimeseries(props) {
         return <div><Spinner inline/>ERROR: {globalerror}</div>
 
     } else if(queryResults) {
-        let seriesAlignment = !alignment || alignment =="" ? "start" : alignment
+        let seriesAlignment = !conf_alignment || conf_alignment =="" ? "start" : conf_alignment
         const determineComparisonPoint = (r) => {
             let comparisonPoint
             switch(seriesAlignment) {
@@ -477,19 +480,19 @@ function AlignedTimeseries(props) {
             queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "avg") ){linechartdata.push(r.data[0])}})
             
         }
-        if( trimmedareabol == true ) {
+        if( conf_trimmedareabol == true ) {
             queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "trimmedarea") ){arechartdata.push(r.data[0])}})
         }
         
-        if( minmaxareabol == true ) {
+        if( conf_minmaxareabol == true ) {
             queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "minmaxarea") ){arechartdata.push(r.data[0])}})
         }
 
-        if( clippedareabol == true ) {
+        if( conf_clippedareabol == true ) {
             queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "clippedarea") ){arechartdata.push(r.data[0])}})
         }
         
-        if (hideoriginaldata == true ) {
+        if (conf_hideoriginaldata == true ) {
             vizchartData=[vizchartData[0]]
         }
         let c_data = dataFromState()
