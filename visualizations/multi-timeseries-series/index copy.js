@@ -10,7 +10,7 @@ import { CSVLink } from "react-csv"
 const defaultColors=['#e6194b', '#3cb44b', '#000000', '#f58231', '#911eb4', '#f032e6', '#bcf60c', '#008080', '#9a6324', '#800000', '#808000', '#000075', '#808080', '#000000']
 let c_accountid
 let trimpercent = 10
-let clipSize=2
+let clipSize=1
 let avgbol = false
 let globalerror
 
@@ -137,6 +137,7 @@ function parse_data(array) {
     return sets
 }
 
+
 function calculatedata(data) {
    
     let resultarray = []
@@ -243,7 +244,7 @@ function calculatedata(data) {
     let clippedminset = parse_data(clippedminctrl)
     let clippedmaxset = parse_data(clippedmaxctrl)
 
-  
+   
     // update queries with calculated data
     data.push({"data":[{"data":avgset, "metadata":{"viz":"main","name": "avg","id":"74B5B05EEA583471E03DCBF0123D81CC79CAE0FE9", "color": defaultColors[1]}}],loading: false, error: null})
     data.push({"data":[{"data":trimmedareaset, "metadata":{"viz":"main","name": "trimmedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CEE0FE9", "color":'#0262BC66'}}],loading: false, error: null})
@@ -283,26 +284,13 @@ function AlignedTimeseries(props) {
     } = props;
     const [queryResults, setQueryResults] = useState(null);
 
+
     let timeRange;
     let overrideTimePicker=false;
 
     console.log(conf_startunixtime,conf_endunixtime,conf_duration)
-
-    // TODO improve logic as currently not reaching else to use hardcoded values
     //determine time window overrides
-    if (conf_startunixtime == null && conf_endunixtime== null && conf_duration==''){ //nothing provided, nothing populated 
-        //hard coded defaults
-        const duration = 60*60*24*1*1000
-        const enddate =  Date.now() - duration
-        const startdate = enddate - duration
-
-        // Often provided by the PlatformState provider
-        timeRange = {
-            begin_time: startdate,
-            duration: null, 
-            end_time: enddate
-        };
-    }else if(conf_startunixtime!=="" && conf_endunixtime!=="") {     //start and end time provided
+    if(conf_startunixtime!=="" && conf_endunixtime!=="") {     //start and end time provided
         timeRange = {
             begin_time: parseInt(conf_startunixtime)*1000,
             duration: null, 
@@ -338,7 +326,7 @@ function AlignedTimeseries(props) {
         const enddate =  Date.now() - duration
         const startdate = enddate - duration
     
-        //Often provided by the PlatformState provider
+        // // Often provided by the PlatformState provider
         timeRange = {
             begin_time: startdate,
             duration: null, 
@@ -347,10 +335,15 @@ function AlignedTimeseries(props) {
 
     }
 
+
+
     // Often provided by the PlatformState provider, but not when in first creation mode
     const ctx = {tvMode: false, accountId: c_accountid, filters: undefined, timeRange: timeRange}
     const cplatformstatecontext = ctx
     // useContext(PlatformStateContext);
+    // console.log("running ctx is ", cplatformstatecontext)
+
+
 
     useEffect(async () => {      
             let windowsize
@@ -365,8 +358,6 @@ function AlignedTimeseries(props) {
             if (conf_clipsize != "") {
                 clipSize = conf_clipsize
             }
-
-            console.log(overrideTimePicker,cplatformstatecontext)
 
             if(overrideTimePicker) { // if a fixed window has been provided then we use that instead of any values delivered via the time picker.
                 cplatformstatecontext.timeRange = timeRange
@@ -415,9 +406,6 @@ function AlignedTimeseries(props) {
 
             let promises=nrqlQueries.map((q)=>{return NrqlQuery.query({accountIds: [q.accountId], query: q.query,formatTypeenum: NrqlQuery.FORMAT_TYPE.CHART})})
             let data
-            
-            console.log(nrqlQueries)
-
             try {
                 data = await Promise.all(promises)
                 if (data[0].error != null){
@@ -427,7 +415,6 @@ function AlignedTimeseries(props) {
             } catch (e){
                 console.log(e)
             }
-
 
            // name the queries and update the colours
            let count = 1
@@ -450,7 +437,6 @@ function AlignedTimeseries(props) {
                }
                count ++
            })
-
             calculatedata(data)
             setQueryResults(data)
 
@@ -474,7 +460,6 @@ function AlignedTimeseries(props) {
 
         return () => clearInterval(interval);            
      },[props]);
-
     
     if (globalerror != undefined){
         return <div><Spinner inline/>ERROR: {globalerror}</div>
