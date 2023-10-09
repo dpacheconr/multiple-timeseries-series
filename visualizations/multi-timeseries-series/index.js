@@ -286,8 +286,6 @@ function AlignedTimeseries(props) {
     let timeRange;
     let overrideTimePicker=false;
 
-    console.log(conf_startunixtime,conf_endunixtime,conf_duration)
-
     // TODO improve logic as currently not reaching else to use hardcoded values
     //determine time window overrides
     if (conf_startunixtime == null && conf_endunixtime== null && conf_duration==''){ //nothing provided, nothing populated 
@@ -366,8 +364,6 @@ function AlignedTimeseries(props) {
                 clipSize = conf_clipsize
             }
 
-            console.log(overrideTimePicker,cplatformstatecontext)
-
             if(overrideTimePicker) { // if a fixed window has been provided then we use that instead of any values delivered via the time picker.
                 cplatformstatecontext.timeRange = timeRange
             }
@@ -416,7 +412,6 @@ function AlignedTimeseries(props) {
             let promises=nrqlQueries.map((q)=>{return NrqlQuery.query({accountIds: [q.accountId], query: q.query,formatTypeenum: NrqlQuery.FORMAT_TYPE.CHART})})
             let data
             
-            console.log(nrqlQueries)
 
             try {
                 data = await Promise.all(promises)
