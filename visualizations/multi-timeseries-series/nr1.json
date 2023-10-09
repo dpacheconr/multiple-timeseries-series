@@ -37,7 +37,13 @@
         {
             "name": "conf_compare",
             "title": "Compare",
-            "description": "Number minutes/hours/days/weeks to compare",
+            "description": "Number of historical windows to compare",
+            "type": "number"
+        },
+        {
+            "name": "conf_comparestepsize",
+            "title": "Compare step size (s)",
+            "description": "The gap between each historical window (e.g. 86400 is one day)",
             "type": "number"
         },
         {
@@ -48,14 +54,14 @@
         },
         {
             "name": "conf_hideoriginaldata",
-            "title": "Hide NRQL Data",
-            "description": "Hide NRQL data",
+            "title": "Hide historical",
+            "description": "Hide historical series from chart",
             "type": "boolean"
         },
         {
             "name": "conf_average",
             "title": "Average",
-            "description": "Average line",
+            "description": "Display an average line",
             "type": "boolean"
         },
         {

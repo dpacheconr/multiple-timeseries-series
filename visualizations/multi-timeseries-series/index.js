@@ -13,6 +13,7 @@ let trimpercent = 10
 let clipSize=1
 let avgbol = false
 let globalerror
+const DefaultWindowSize = 60 * 60 * 24  * 1000;
 
 
 function avgfunction (array) {
@@ -295,7 +296,8 @@ function AlignedTimeseries(props) {
         conf_startunixtime,
         conf_endunixtime,
         conf_duration,
-        conf_refreshrate
+        conf_refreshrate,
+        conf_comparestepsize
     
     } = props;
     const [queryResults, setQueryResults] = useState(null);
@@ -336,17 +338,17 @@ function AlignedTimeseries(props) {
         };
         overrideTimePicker=true;
     } else {
-        //hard coded defaults
-        const duration = 60*60*24*1*1000
-        const enddate =  Date.now() - duration
-        const startdate = enddate - duration
+        // //hard coded defaults
+        // const duration = 60*60*24*1*1000
+        // const enddate =  Date.now() - duration
+        // const startdate = enddate - duration
     
-        // // Often provided by the PlatformState provider
-        timeRange = {
-            begin_time: startdate,
-            duration: null, 
-            end_time: enddate
-        };
+        // // // Often provided by the PlatformState provider
+        // timeRange = {
+        //     begin_time: startdate,
+        //     duration: null, 
+        //     end_time: enddate
+        // };
 
     }
 
@@ -377,47 +379,41 @@ function AlignedTimeseries(props) {
             if(overrideTimePicker) { // if a fixed window has been provided then we use that instead of any values delivered via the time picker.
                 cplatformstatecontext.timeRange = timeRange
             }
-            if (cplatformstatecontext.timeRange != undefined) {
 
-                if (cplatformstatecontext.timeRange.duration == null){ //timepicker chosen start and end time
+
+            let historicalStepSize= (conf_comparestepsize === "" || conf_comparestepsize == null) ? 0 : parseInt(conf_comparestepsize)*1000 //the amount to shift each window back in time
+
+                let sinceTime, untilTime ;
+    
+                if (cplatformstatecontext.timeRange && cplatformstatecontext.timeRange.duration == null){ //timepicker chosen start and end time
+                    console.log("Time range ste by start/end time")
                     windowsize = (parseInt(cplatformstatecontext.timeRange.end_time) - parseInt(cplatformstatecontext.timeRange.begin_time))
-                    for (let i = 0; i <= conf_compare; i++) {
-                        let from = (cplatformstatecontext.timeRange.end_time) - (windowsize * (i+1))
-                        let until = (cplatformstatecontext.timeRange.end_time) - (windowsize * (i))
-                        let query = mainquery + " SINCE " + from + " until "+ until  + " TIMESERIES " + conf_timeseries
-                        if (i == 0 ) { 
-                            nrqlQueries[0].query = query  
-                        } else {
-                            nrqlQueries.push({accountId: c_accountid, query: query, color: defaultColors[Math.floor(Math.random() * defaultColors.length)]}) 
-                        }                
-                    }
+                    sinceTime = cplatformstatecontext.timeRange.begin_time
+                    untilTime = cplatformstatecontext.timeRange.end_time
+                } else if(cplatformstatecontext.timeRange && cplatformstatecontext.timeRange.duration != null) {  //timepicker value is relative
+                    console.log("Time range set by duration")
+                    windowsize = parseInt(cplatformstatecontext.timeRange.duration)
+                    untilTime = Date.now();
+                    sinceTime =  untilTime - windowsize;
+                } else {
+                    console.log("Time range not set, using default")
+                    windowsize = DefaultWindowSize //no value set, use a default value
+                    untilTime = Date.now();
+                    sinceTime =  untilTime - windowsize;
+                }
 
-                } else { //timpicker is relative choice (e.g since 7 days ago)
-                  windowsize = parseInt(cplatformstatecontext.timeRange.duration) / 1000
-                  for (let i = 0; i <= conf_compare; i++) {
-                    let query = mainquery + " SINCE " + (parseInt(windowsize)*(i+1))  + " seconds ago " + " until "+ (parseInt(windowsize)*(i))  + " seconds ago TIMESERIES " + conf_timeseries
-                    if (i == 0 ) {
-                        nrqlQueries[0].query = query
-                    } else {
-                        nrqlQueries.push({accountId: c_accountid, query: query, color: defaultColors[Math.floor(Math.random() * defaultColors.length)]})
-                    
-                    }                
-                }
-                }
-                
-            } else { //default if nothing is chosen in picker, but picker present (default)
-                windowsize = 1800 // defaults to 30 minutes
                 for (let i = 0; i <= conf_compare; i++) {
-                    let query = mainquery + " SINCE " + (parseInt(windowsize)*(i+1))  + " seconds ago " + " until "+ (parseInt(windowsize)*(i))  + " seconds ago TIMESERIES " + conf_timeseries
-                    if (i == 0 ) {
-                        nrqlQueries[0].query = query
+                    let from = (sinceTime - (windowsize * (i))) - (i*historicalStepSize)
+                    let until = (untilTime - (windowsize * (i))) - (i*historicalStepSize)
+                    let query = mainquery + " SINCE " + from + " until "+ until  + " TIMESERIES " + conf_timeseries
+                    if (i == 0 ) { 
+                        nrqlQueries[0].query = query  
                     } else {
-                        nrqlQueries.push({accountId: c_accountid, query: query, color: defaultColors[Math.floor(Math.random() * defaultColors.length)]})
-                    
+                        nrqlQueries.push({accountId: c_accountid, query: query, color: defaultColors[Math.floor(Math.random() * defaultColors.length)]}) 
                     }                
                 }
-            }
 
+            console.log(nrqlQueries)
 
             let promises=nrqlQueries.map((q)=>{return NrqlQuery.query({accountIds: [q.accountId], query: q.query,formatTypeenum: NrqlQuery.FORMAT_TYPE.CHART})})
             let data
