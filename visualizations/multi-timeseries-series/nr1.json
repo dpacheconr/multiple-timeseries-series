@@ -29,6 +29,18 @@
             "type": "number"
         },
         {
+            "name": "conf_startsecondsfromnow",
+            "title": "Start offset from now (seconds)",
+            "description": "Window start, offset from now",
+            "type": "number"
+        },
+        {
+            "name": "conf_endsecondsfromnow",
+            "title": "End offset from now (seconds)",
+            "description": "Window end, offset from now",
+            "type": "number"
+        },
+        {
             "name": "conf_duration",
             "title": "Duration (seconds)",
             "description": "Duration",

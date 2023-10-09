@@ -297,7 +297,9 @@ function AlignedTimeseries(props) {
         conf_endunixtime,
         conf_duration,
         conf_refreshrate,
-        conf_comparestepsize
+        conf_comparestepsize,
+        conf_startsecondsfromnow,
+        conf_endsecondsfromnow
     
     } = props;
     const [queryResults, setQueryResults] = useState(null);
@@ -306,31 +308,56 @@ function AlignedTimeseries(props) {
     let timeRange;
     let overrideTimePicker=false;
 
+
     //determine time window overrides
-    if(conf_startunixtime!=="" && conf_endunixtime!=="") {     //start and end time provided
+    let startunixtime = null; //in ms
+    let endunixtime = null; //in ms!
+
+    // Hard coded window
+    if(conf_startunixtime!=="" && conf_startunixtime !== null) {
+        startunixtime = parseInt(conf_startunixtime) * 1000
+    }
+    if(conf_endunixtime!=="" && conf_endunixtime !== null) {
+        endunixtime = parseInt(conf_endunixtime) * 1000
+    }
+
+    //Offset form now window
+    if(conf_startsecondsfromnow!=="" && conf_startsecondsfromnow !== null) {
+        startunixtime =  Date.now() - (conf_startsecondsfromnow * 1000)
+    }
+    if(conf_endsecondsfromnow!=="" && conf_endsecondsfromnow !== null) {
+        endunixtime =  Date.now() + (conf_endsecondsfromnow * 1000)
+    }
+
+    
+    if(startunixtime!==null && endunixtime!==null) {     //start and end time provided
+        console.log("Start and end time provided",startunixtime,endunixtime)
         timeRange = {
-            begin_time: parseInt(conf_startunixtime)*1000,
+            begin_time: startunixtime,
             duration: null, 
-            end_time: parseInt(conf_endunixtime)*1000
+            end_time: endunixtime
         };
         overrideTimePicker=true;
-    } else if(conf_startunixtime!=="" && conf_duration!=="") {  // start and duration provided
+    } else if(startunixtime!==null && conf_duration!=="" && conf_duration!==null ) {  // start and duration provided
+        console.log("Start and duration provided", startunixtime, conf_duration)
         timeRange = {
-            begin_time: parseInt(conf_startunixtime)*1000,
+            begin_time: startunixtime,
             duration: null, 
-            end_time: (parseInt(conf_startunixtime)+parseInt(conf_duration))*1000
+            end_time: startunixtime + (parseInt(conf_duration) * 1000)
         };
 
         overrideTimePicker=true;
-    } else if(conf_endunixtime!=="" && conf_duration!=="") { // end and duration provided
+    } else if(endunixtime!==null && conf_duration!=="" && conf_duration!==null) { // end and duration provided
+        console.log("End and duration provided")
         timeRange = {
-            begin_time: (parseInt(conf_endunixtime)-parseInt(conf_duration)) *1000,
+            begin_time: endunixtime - (parseInt(conf_duration) * 1000),
             duration: null, 
-            end_time: parseInt(conf_endunixtime*1000)
+            end_time: endunixtime
         };
         overrideTimePicker=true;
     }
-    else if(conf_duration!=="") { // just duration provided, assume thats a since duration time ago until now
+    else if(conf_duration!=="" && conf_duration!==null) { // just duration provided, assume thats a since duration time ago until now
+        console.log("Just duration provided")
         timeRange = {
             begin_time: null,
             duration: parseInt(conf_duration) * 1000, 
@@ -352,7 +379,7 @@ function AlignedTimeseries(props) {
 
     }
 
-
+console.log("timeRange",timeRange)
 
     // Often provided by the PlatformState provider, but not when in first creation mode
     const ctx = {tvMode: false, accountId: c_accountid, filters: undefined, timeRange: timeRange}
