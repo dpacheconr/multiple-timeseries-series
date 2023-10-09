@@ -4,7 +4,7 @@ import React, { useState, useEffect, useContext} from 'react';
 import {NrqlQuery, Spinner,Grid,GridItem,AutoSizer,PlatformStateContext} from 'nr1';
 import { Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ComposedChart,Area} from 'recharts';
 import { CSVLink } from "react-csv"
-
+import moment from 'moment';
 
 // Global variables
 const defaultColors=['#e6194b', '#3cb44b', '#000000', '#f58231', '#911eb4', '#f032e6', '#bcf60c', '#008080', '#9a6324', '#800000', '#808000', '#000075', '#808080', '#000000']
@@ -298,8 +298,10 @@ function AlignedTimeseries(props) {
         conf_duration,
         conf_refreshrate,
         conf_comparestepsize,
-        conf_startsecondsfromnow,
-        conf_endsecondsfromnow
+        conf_startfromnow,
+        conf_endfromnow,
+        conf_todaystarttime,
+        conf_todayendtime
     
     } = props;
     const [queryResults, setQueryResults] = useState(null);
@@ -312,6 +314,29 @@ function AlignedTimeseries(props) {
     //determine time window overrides
     let startunixtime = null; //in ms
     let endunixtime = null; //in ms!
+    let parsedDuration=null;
+    let historicalStepSize=0;
+    let startFromNow=null;
+    let endFromNow=null;
+
+
+    //parsing period data
+    if(conf_duration !=="" && conf_duration !==null) {
+        console.log("Parsed duration",moment.duration("P"+conf_duration).asSeconds())
+        parsedDuration=moment.duration("P"+conf_duration).asSeconds() * 1000;
+    }
+    if(conf_comparestepsize !=="" && conf_comparestepsize !==null) {
+        console.log("Parsed step size",moment.duration("P"+conf_comparestepsize).asSeconds())
+        historicalStepSize=moment.duration("P"+conf_comparestepsize).asSeconds() * 1000;
+    }
+    if(conf_startfromnow !=="" && conf_startfromnow !==null) {
+        console.log("Parsed start from now",moment.duration("P"+conf_startfromnow).asSeconds())
+        startFromNow=moment.duration("P"+conf_startfromnow).asSeconds() * 1000;
+    }
+    if(conf_endfromnow !=="" && conf_endfromnow !==null) {
+        console.log("Parsed end from now",moment.duration("P"+conf_endfromnow).asSeconds())
+        endFromNow=moment.duration("P"+conf_endfromnow).asSeconds() * 1000;
+    }
 
     // Hard coded window
     if(conf_startunixtime!=="" && conf_startunixtime !== null) {
@@ -322,11 +347,21 @@ function AlignedTimeseries(props) {
     }
 
     //Offset form now window
-    if(conf_startsecondsfromnow!=="" && conf_startsecondsfromnow !== null) {
-        startunixtime =  Date.now() - (conf_startsecondsfromnow * 1000)
+    if(startFromNow !== null) {
+        startunixtime =  Date.now() - startFromNow
     }
-    if(conf_endsecondsfromnow!=="" && conf_endsecondsfromnow !== null) {
-        endunixtime =  Date.now() + (conf_endsecondsfromnow * 1000)
+    if(endFromNow !== null) {
+        endunixtime =  Date.now() + endFromNow
+    }
+
+    //Freetext hour
+    if(conf_todaystarttime!=="" && conf_todaystarttime!==null) {
+        console.log("Start time",moment(conf_todaystarttime, "hhmm").format())
+        startunixtime=moment(conf_todaystarttime, "hhmm").valueOf()
+    }
+    if(conf_todayendtime!=="" && conf_todayendtime!==null) {
+        console.log("Start time",moment(conf_todayendtime, "hhmm").format())
+        endunixtime=moment(conf_todayendtime, "hhmm").valueOf()
     }
 
     
@@ -338,29 +373,29 @@ function AlignedTimeseries(props) {
             end_time: endunixtime
         };
         overrideTimePicker=true;
-    } else if(startunixtime!==null && conf_duration!=="" && conf_duration!==null ) {  // start and duration provided
-        console.log("Start and duration provided", startunixtime, conf_duration)
+    } else if(startunixtime!==null &&  parsedDuration!==null ) {  // start and duration provided
+        console.log("Start and duration provided", startunixtime, parsedDuration)
         timeRange = {
             begin_time: startunixtime,
             duration: null, 
-            end_time: startunixtime + (parseInt(conf_duration) * 1000)
+            end_time: startunixtime + parsedDuration
         };
 
         overrideTimePicker=true;
-    } else if(endunixtime!==null && conf_duration!=="" && conf_duration!==null) { // end and duration provided
+    } else if(endunixtime!==null && parsedDuration!==null) { // end and duration provided
         console.log("End and duration provided")
         timeRange = {
-            begin_time: endunixtime - (parseInt(conf_duration) * 1000),
+            begin_time: endunixtime - parsedDuration,
             duration: null, 
             end_time: endunixtime
         };
         overrideTimePicker=true;
     }
-    else if(conf_duration!=="" && conf_duration!==null) { // just duration provided, assume thats a since duration time ago until now
+    else if( parsedDuration!==null) { // just duration provided, assume thats a since duration time ago until now
         console.log("Just duration provided")
         timeRange = {
             begin_time: null,
-            duration: parseInt(conf_duration) * 1000, 
+            duration: parsedDuration, 
             end_time: null
         };
         overrideTimePicker=true;
@@ -408,7 +443,7 @@ console.log("timeRange",timeRange)
             }
 
 
-            let historicalStepSize= (conf_comparestepsize === "" || conf_comparestepsize == null) ? 0 : parseInt(conf_comparestepsize)*1000 //the amount to shift each window back in time
+             //the amount to shift each window back in time
 
                 let sinceTime, untilTime ;
     
@@ -428,10 +463,12 @@ console.log("timeRange",timeRange)
                     untilTime = Date.now();
                     sinceTime =  untilTime - windowsize;
                 }
+                console.log("historicalStepSize",historicalStepSize)
 
                 for (let i = 0; i <= conf_compare; i++) {
-                    let from = (sinceTime - (windowsize * (i))) - (i*historicalStepSize)
-                    let until = (untilTime - (windowsize * (i))) - (i*historicalStepSize)
+                    let step = historicalStepSize > 0 ? historicalStepSize : windowsize;
+                    let from = sinceTime - (step * i);
+                    let until = untilTime - (step * i);
                     let query = mainquery + " SINCE " + from + " until "+ until  + " TIMESERIES " + conf_timeseries
                     if (i == 0 ) { 
                         nrqlQueries[0].query = query  
