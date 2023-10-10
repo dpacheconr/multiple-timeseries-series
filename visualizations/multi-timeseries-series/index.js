@@ -103,7 +103,7 @@ function exportToCsv (querydataImput){
     }
 
     let output = []
-    console.log(c_newdata.data)
+
     c_newdata.data.forEach(array => {
         var tempDict = {};
         for(var i = 0; i < sorted.length; i++) {   
