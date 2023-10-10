@@ -125,6 +125,30 @@
             "type": "string"
         },
         {
+            "name": "conf_showdots",
+            "title": "Show dots",
+            "description": "Show dots on line chart",
+            "type": "boolean"
+        },
+        {
+            "name": "conf_yaxislabel",
+            "title": "Y Axis Label",
+            "description": "Y Axis label",
+            "type": "string"
+        },
+        {
+            "name": "conf_yaxismax",
+            "title": "Y axis max",
+            "description": "Y Axis max value",
+            "type": "string"
+        },
+        {
+            "name": "conf_yaxismin",
+            "title": "Y axis min",
+            "description": "Y Axis min value",
+            "type": "string"
+        },
+        {
             "name": "conf_alignment",
             "title": "Alignment",
             "description": "How the timeseries should be aligned",

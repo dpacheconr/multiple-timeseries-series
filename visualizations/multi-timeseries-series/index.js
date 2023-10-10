@@ -195,7 +195,7 @@ function calculatedata(data) {
                 trimpercent = 10
             }
             if (clipSize == undefined){
-                clipSize = 2
+                clipSize = 1
             }
 
             trimmedmin.push(mins)
@@ -282,7 +282,11 @@ function AlignedTimeseries(props) {
         conf_startfromnow,
         conf_endfromnow,
         conf_todaystarttime,
-        conf_todayendtime
+        conf_todayendtime,
+        conf_yaxislabel,
+        conf_yaxismax,
+        conf_yaxismin,
+        conf_showdots
     
     } = props;
     const [queryResults, setQueryResults] = useState(null);
@@ -598,24 +602,64 @@ function AlignedTimeseries(props) {
             vizchartData=[vizchartData[0]]
         }
 
+
+        //CHart configuration options
+        let yLabel=null
+        let LeftMargin = 0
+        if(conf_yaxislabel !== "" & conf_yaxislabel!== null) {
+            LeftMargin = 20
+            yLabel = { value: conf_yaxislabel, angle: -90, position: 'insideLeft', style: {fontSize: '0.9rem',fontWeight: 'bold',  fontFamily: '"Inter", "Segoe UI", "Tahoma", sans-serif'}}
+        }
+
+
+        // Y axis - supports recharts somain syntax: https://recharts.org/en-US/api/YAxis#domain
+        let yAxisDomain=['auto','auto']
+        if(conf_yaxismax !== "" && conf_yaxismax!= null) {
+            let val = parseInt(conf_yaxismax)
+             yAxisDomain[1]=isNaN(val) ? conf_yaxismax : val
+        }
+        if(conf_yaxismin !== "" && conf_yaxismin!= null) {
+            let val = parseInt(conf_yaxismin)
+            yAxisDomain[0]=isNaN(val) ? conf_yaxismin : val
+        }
+
+
+        //Line chart options
+        let showDots=false;
+        if(conf_showdots!=="" && conf_showdots!==null) {
+            showDots = conf_showdots;
+        }
+
         let outTable= <>
             <CSVLink filename="QueryData.csv" data={exportToCsv(exportchartData)}>Download data as CSV</CSVLink>
         </>
         return <AutoSizer>
-            {({ width, height }) => (<div style={{ height, width }}>
-            <ComposedChart width={width} height={height} margin={{top: 10, right: 10, bottom: 0, left: 0}}>
+            {({ width, height }) => (<div style={{ height: height, width: width }}>
+            <ComposedChart width={width} height={height} margin={{top: 10, right: 50, bottom: 30, left: LeftMargin}}>
           <CartesianGrid strokeDasharray="3 3" /> 
-          <XAxis dataKey="x"  type="category"  allowDuplicatedCategory={false}/>
-          <YAxis dataKey="y" type="number" interval="equidistantPreserveStart" />
+          <XAxis dataKey="x"  type="category"  allowDuplicatedCategory={false} style={{
+                    fontSize: '0.8rem',
+                    fontFamily: '"Inter", "Segoe UI", "Tahoma", sans-serif'
+                }}/>
+          <YAxis 
+            dataKey="y" 
+            type="number" 
+            interval="equidistantPreserveStart" 
+            domain={yAxisDomain}
+            allowDataOverflow={true} 
+            label={yLabel} 
+            style={{
+                    fontSize: '0.8rem',
+                    fontFamily: '"Inter", "Segoe UI", "Tahoma", sans-serif'
+                }}
+            />
           <Tooltip />
           <Legend />
-          {
-          linechartdata.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={5} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>))
-          }   
+          {linechartdata.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={5} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>))}   
           {arechartdata.map((s) => (<Area type="monotone" fill={s.metadata.color} dataKey="y" data={s.data}  name={s.metadata.name} strokeWidth={0} key={s.metadata.name}/>))}
-          {vizchartData.map((s) => {return <Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>
-    })
-          }
+          {vizchartData.map((s) => {return <Line type="linear" dot={showDots} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>})}
+         
+          
         
 
            
