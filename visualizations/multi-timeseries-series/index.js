@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useContext} from 'react';
 import {NrqlQuery, Spinner,Grid,GridItem,AutoSizer,PlatformStateContext} from 'nr1';
-import { Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ComposedChart,Area} from 'recharts';
+import { Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ComposedChart,Area,ReferenceDot} from 'recharts';
 import { CSVLink } from "react-csv"
 import moment from 'moment';
 import { array } from 'prop-types';
@@ -93,7 +93,7 @@ function exportToCsv (querydataImput){
                 for (let key in dict){
                     if (!keys.includes(key)){
                         c_newdata.data[index][key] = dict[key]
-                        // also delete unwanted keys in this for loop
+                        // also delete unwanted keys in this loop
                         delete c_newdata.data[index]["x"]
                         delete c_newdata.data[index]["y"]
                 }
@@ -667,7 +667,8 @@ function AlignedTimeseries(props) {
           <Legend />
           {linechartdata.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={5} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>))}   
           {arechartdata.map((s) => (<Area type="monotone" fill={s.metadata.color} dataKey="y" data={s.data}  name={s.metadata.name} strokeWidth={0} key={s.metadata.name}/>))}
-          {vizchartData.map((s) => {return <Line type="linear" dot={showDots} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>})}    
+          {vizchartData.map((s) => {return <Line type="linear" dot={showDots} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>})}
+          <ReferenceDot fill="#f58231" labe="Number" x={vizchartData[0].data[vizchartData[0].data.length-5].x} y={vizchartData[0].data[vizchartData[0].data.length-5].y} isFront={true}/>
         </ComposedChart>
         <Grid>
             <GridItem columnSpan={12}>
