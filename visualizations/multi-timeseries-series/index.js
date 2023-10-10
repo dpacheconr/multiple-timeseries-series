@@ -17,6 +17,14 @@ let avgbol = false
 let globalerror
 const DefaultWindowSize = 60 * 60 * 24  * 1000;
 
+export function convertTimestampToDate(timestamp) {
+    let value = timestamp
+    let dateObj = new Date(value);
+    let utcString = dateObj.toUTCString();
+    let time = utcString.slice(5,-4);
+    return time
+  }
+
 
 function avgfunction (array) {
     let sum = 0;
@@ -107,14 +115,18 @@ function exportToCsv (querydataImput){
     c_newdata.data.forEach(array => {
         var tempDict = {};
         for(var i = 0; i < sorted.length; i++) {   
+            if (i <=1) {
+                let c_key = String(sorted[i])
+                let item_val = convertTimestampToDate(array[sorted[i]])
+                tempDict[c_key]= item_val
+            } else {
             let c_key = String(sorted[i])
             let item_val = array[sorted[i]]
             tempDict[c_key]=item_val
-
+            }
         }
         output.push(tempDict)
     }
-        
     )
     return output
 }
@@ -373,8 +385,7 @@ function AlignedTimeseries(props) {
             end_time: endunixtime
         };
         overrideTimePicker=true;
-    }
-    else if( parsedDuration!==null) { // just duration provided, assume thats a since duration time ago until now
+    } else if( parsedDuration!==null) { // just duration provided, assume thats a since duration time ago until now
         console.log("Just duration provided")
         timeRange = {
             begin_time: null,
@@ -572,9 +583,6 @@ function AlignedTimeseries(props) {
             }
         })
 
-        // convert unix timestamps to date time
-       unixtodatetime(queryResults)
-
         let vizchartData=[]
         let exportchartData=[]
         let linechartdata = []
@@ -639,7 +647,7 @@ function AlignedTimeseries(props) {
             {({ width, height }) => (<div style={{ height: height, width: width }}>
             <ComposedChart width={width} height={height} margin={{top: 10, right: 50, bottom: 30, left: LeftMargin}}>
           <CartesianGrid strokeDasharray="3 3" /> 
-          <XAxis dataKey="x"  type="category"  allowDuplicatedCategory={false} style={{
+          <XAxis tickFormatter={convertTimestampToDate} dataKey="x"  type="category" allowDuplicatedCategory={false} style={{
                     fontSize: '0.8rem',
                     fontFamily: '"Inter", "Segoe UI", "Tahoma", sans-serif'
                 }}/>
@@ -659,12 +667,7 @@ function AlignedTimeseries(props) {
           <Legend />
           {linechartdata.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={5} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>))}   
           {arechartdata.map((s) => (<Area type="monotone" fill={s.metadata.color} dataKey="y" data={s.data}  name={s.metadata.name} strokeWidth={0} key={s.metadata.name}/>))}
-          {vizchartData.map((s) => {return <Line type="linear" dot={showDots} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>})}
-         
-          
-        
-
-           
+          {vizchartData.map((s) => {return <Line type="linear" dot={showDots} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>})}    
         </ComposedChart>
         <Grid>
             <GridItem columnSpan={12}>
