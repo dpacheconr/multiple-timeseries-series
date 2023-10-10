@@ -161,7 +161,36 @@
                 {
                     "title": "Strong",
                     "value": "strong"
+                },
+                {
+                    "title": "Grey fade",
+                    "value": "greyfade"
+                },
+                {
+                    "title": "Blue fade",
+                    "value": "bluefade"
+                },
+                {
+                    "title": "Retro metro",
+                    "value": "retrometro"
+                },
+                {
+                    "title": "Dutch field",
+                    "value": "dutchfield"
+                },
+                {
+                    "title": "Pink black",
+                    "value": "pinkblack"
+                },
+                {
+                    "title": "Brewer YlGnBu",
+                    "value": "brewer-YlGnBu"
+                },
+                {
+                    "title": "Brewer RdPu",
+                    "value": "brewer-RdPu"
                 }
+                
             ]
         },
         {

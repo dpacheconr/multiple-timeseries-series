@@ -310,6 +310,11 @@ function AlignedTimeseries(props) {
        
     }
     
+    let fadeColorSize=20
+    if(conf_compare!=="" && conf_compare!=null) {
+        fadeColorSize=parseInt(conf_compare);
+    }
+    console.log("fadeColorSize",fadeColorSize)
     const colorThemes={
 
         "pale": {
@@ -326,14 +331,56 @@ function AlignedTimeseries(props) {
             minmaxArea: "#66666666",
             history: ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928'],
         },
-        "fade": {
+        "greyfade": {
+            primary: "#0d66d4",
+            clippedArea: "#22DC6499",
+            trimmedArea: "#0262BC66",
+            minmaxArea: "#66666666",
+            history: chroma.scale(['#c9c9c9', '#f2f2f2']).colors(fadeColorSize),
+        },
+        "bluefade": {
             primary: "#c25f19",
             clippedArea: "#22DC6499",
             trimmedArea: "#0262BC66",
             minmaxArea: "#66666666",
-            history: ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928'],
+            history: chroma.scale(['#5689c7', '#dae4f0']).colors(fadeColorSize),
         },
-        
+        "retrometro": {
+            primary: "green",
+            clippedArea: "#22DC6499",
+            trimmedArea: "#0262BC66",
+            minmaxArea: "#66666666",
+            history: ["#ea5545", "#f46a9b", "#ef9b20", "#edbf33", "#ede15b", "#bdcf32", "#87bc45", "#27aeef", "#b33dc6"]
+        },
+        "dutchfield": {
+            primary: "#c25f19",
+            clippedArea: "#22DC6499",
+            trimmedArea: "#0262BC66",
+            minmaxArea: "#66666666",
+            history:  ["#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]
+        },
+        "pinkblack": {
+            primary: "#0d66d4",
+            clippedArea: "#22DC6499",
+            trimmedArea: "#0262BC66",
+            minmaxArea: "#66666666",
+            history:  ["#2e2b28", "#3b3734", "#474440", "#54504c", "#6b506b", "#ab3da9", "#de25da", "#eb44e8", "#ff80ff"].reverse()
+        },
+        "brewer-YlGnBu": {
+            primary: "#c25f19",
+            clippedArea: "#22DC6499",
+            trimmedArea: "#0262BC66",
+            minmaxArea: "#66666666",
+            history:  chroma.scale('YlGnBu').colors(fadeColorSize).reverse()
+        },
+        "brewer-RdPu": {
+            primary: "#c25f19",
+            clippedArea: "#22DC6499",
+            trimmedArea: "#0262BC66",
+            minmaxArea: "#66666666",
+            history:  chroma.scale('RdPu').colors(fadeColorSize).reverse()
+        }
+       
         
     }
 
@@ -514,7 +561,7 @@ function AlignedTimeseries(props) {
                 if (i == 0 ) { 
                     nrqlQueries[0].query = query  
                 } else {
-                    nrqlQueries.push({accountId: c_accountid, query: query, color: getColor(0)}) 
+                    nrqlQueries.push({accountId: c_accountid, query: query, color: getColor(i)}) 
                 }                
             }
     
@@ -541,7 +588,7 @@ function AlignedTimeseries(props) {
            if (count != 1){
                let c_name = data[0].data[0].metadata.name
                el.data[0].metadata.name = data[0].data[0].metadata.name+(count-1)
-               el.data[0].metadata.color = getColor(count)
+               el.data[0].metadata.color = getColor(count-2)
                el.data[0].data.forEach(c_array => {
                    for( let item in c_array){
                        if (item == c_name){
