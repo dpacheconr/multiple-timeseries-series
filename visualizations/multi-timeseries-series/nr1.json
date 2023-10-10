@@ -29,16 +29,46 @@
             "type": "number"
         },
         {
+            "name": "conf_startfromnow",
+            "title": "Start offset from now (period)",
+            "description": "Window start, offset from now. 'T1H', 'T45M",
+            "type": "string"
+        },
+        {
+            "name": "conf_endfromnow",
+            "title": "End offset from now (period)",
+            "description": "Window end, offset from now. e.g. 'T1H', 'T45M'",
+            "type": "string"
+        },
+        {
+            "name": "conf_todaystarttime",
+            "title": "Start today time (hhmm)",
+            "description": "Window start time, today",
+            "type": "string"
+        },
+        {
+            "name": "conf_todayendtime",
+            "title": "End today time (hhmm)",
+            "description": "Window end time, today",
+            "type": "string"
+        },
+        {
             "name": "conf_duration",
-            "title": "Duration (seconds)",
-            "description": "Duration",
-            "type": "number"
+            "title": "Duration (period)",
+            "description": "Duration of window, e.g. 'T30M', 'T1H','T2H30M', '7D', '3DT12H",
+            "type": "string"
         },
         {
             "name": "conf_compare",
             "title": "Compare",
-            "description": "Number minutes/hours/days/weeks to compare",
+            "description": "Number of historical windows to compare",
             "type": "number"
+        },
+        {
+            "name": "conf_comparestepsize",
+            "title": "Compare step size (period)",
+            "description": "The gap between each historical window (e.g. '1D', '12H', 'T45M', '3DT6H30M')",
+            "type": "string"
         },
         {
             "name": "conf_timeseries",
@@ -48,14 +78,14 @@
         },
         {
             "name": "conf_hideoriginaldata",
-            "title": "Hide NRQL Data",
-            "description": "Hide NRQL data",
+            "title": "Hide historical",
+            "description": "Hide historical series from chart",
             "type": "boolean"
         },
         {
             "name": "conf_average",
             "title": "Average",
-            "description": "Average line",
+            "description": "Display an average line",
             "type": "boolean"
         },
         {
