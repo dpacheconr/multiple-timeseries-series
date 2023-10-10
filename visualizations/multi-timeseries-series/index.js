@@ -258,9 +258,6 @@ function calculatedata(data) {
    
 }
 
-
-
-
 function AlignedTimeseries(props) {
     const {
         conf_accountId,
@@ -286,64 +283,110 @@ function AlignedTimeseries(props) {
     let timeRange;
     let overrideTimePicker=false;
 
-    // TODO improve logic as currently not reaching else to use hardcoded values
     //determine time window overrides
-    if (conf_startunixtime == null && conf_endunixtime== null && conf_duration==''){ //nothing provided, nothing populated 
-        //hard coded defaults
-        const duration = 60*60*24*1*1000
-        const enddate =  Date.now() - duration
-        const startdate = enddate - duration
+    let startunixtime = null; //in ms
+    let endunixtime = null; //in ms!
+    let parsedDuration=null;
+    let historicalStepSize=0;
+    let startFromNow=null;
+    let endFromNow=null;
 
-        // Often provided by the PlatformState provider
+
+    //parsing period data
+    if(conf_duration !=="" && conf_duration !==null) {
+        console.log("Parsed duration",moment.duration("P"+conf_duration).asSeconds())
+        parsedDuration=moment.duration("P"+conf_duration).asSeconds() * 1000;
+    }
+    if(conf_comparestepsize !=="" && conf_comparestepsize !==null) {
+        console.log("Parsed step size",moment.duration("P"+conf_comparestepsize).asSeconds())
+        historicalStepSize=moment.duration("P"+conf_comparestepsize).asSeconds() * 1000;
+    }
+    if(conf_startfromnow !=="" && conf_startfromnow !==null) {
+        console.log("Parsed start from now",moment.duration("P"+conf_startfromnow).asSeconds())
+        startFromNow=moment.duration("P"+conf_startfromnow).asSeconds() * 1000;
+    }
+    if(conf_endfromnow !=="" && conf_endfromnow !==null) {
+        console.log("Parsed end from now",moment.duration("P"+conf_endfromnow).asSeconds())
+        endFromNow=moment.duration("P"+conf_endfromnow).asSeconds() * 1000;
+    }
+
+    // Hard coded window
+    if(conf_startunixtime!=="" && conf_startunixtime !== null) {
+        startunixtime = parseInt(conf_startunixtime) * 1000
+    }
+    if(conf_endunixtime!=="" && conf_endunixtime !== null) {
+        endunixtime = parseInt(conf_endunixtime) * 1000
+    }
+
+    //Offset form now window
+    if(startFromNow !== null) {
+        startunixtime =  Date.now() - startFromNow
+    }
+    if(endFromNow !== null) {
+        endunixtime =  Date.now() + endFromNow
+    }
+
+    //Freetext hour
+    if(conf_todaystarttime!=="" && conf_todaystarttime!==null) {
+        console.log("Start time",moment(conf_todaystarttime, "hhmm").format())
+        startunixtime=moment(conf_todaystarttime, "hhmm").valueOf()
+    }
+    if(conf_todayendtime!=="" && conf_todayendtime!==null) {
+        console.log("Start time",moment(conf_todayendtime, "hhmm").format())
+        endunixtime=moment(conf_todayendtime, "hhmm").valueOf()
+    }
+
+    
+    if(startunixtime!==null && endunixtime!==null) {     //start and end time provided
+        console.log("Start and end time provided",startunixtime,endunixtime)
         timeRange = {
-            begin_time: startdate,
+            begin_time: startunixtime,
             duration: null, 
-            end_time: enddate
-        };
-    }else if(conf_startunixtime!=="" && conf_endunixtime!=="") {     //start and end time provided
-        timeRange = {
-            begin_time: parseInt(conf_startunixtime)*1000,
-            duration: null, 
-            end_time: parseInt(conf_endunixtime)*1000
+            end_time: endunixtime
         };
         overrideTimePicker=true;
-    } else if(conf_startunixtime!=="" && conf_duration!=="") {  // start and duration provided
+    } else if(startunixtime!==null &&  parsedDuration!==null ) {  // start and duration provided
+        console.log("Start and duration provided", startunixtime, parsedDuration)
         timeRange = {
-            begin_time: parseInt(conf_startunixtime)*1000,
+            begin_time: startunixtime,
             duration: null, 
-            end_time: (parseInt(conf_startunixtime)+parseInt(conf_duration))*1000
+            end_time: startunixtime + parsedDuration
         };
 
         overrideTimePicker=true;
-    } else if(conf_endunixtime!=="" && conf_duration!=="") { // end and duration provided
+    } else if(endunixtime!==null && parsedDuration!==null) { // end and duration provided
+        console.log("End and duration provided")
         timeRange = {
-            begin_time: (parseInt(conf_endunixtime)-parseInt(conf_duration)) *1000,
+            begin_time: endunixtime - parsedDuration,
             duration: null, 
-            end_time: parseInt(conf_endunixtime*1000)
+            end_time: endunixtime
         };
         overrideTimePicker=true;
     }
-    else if(conf_duration!=="") { // just duration provided, assume thats a since duration time ago until now
+    else if( parsedDuration!==null) { // just duration provided, assume thats a since duration time ago until now
+        console.log("Just duration provided")
         timeRange = {
             begin_time: null,
-            duration: parseInt(conf_duration) * 1000, 
+            duration: parsedDuration, 
             end_time: null
         };
         overrideTimePicker=true;
     } else {
-        //hard coded defaults
-        const duration = 60*60*24*1*1000
-        const enddate =  Date.now() - duration
-        const startdate = enddate - duration
+        // //hard coded defaults
+        // const duration = 60*60*24*1*1000
+        // const enddate =  Date.now() - duration
+        // const startdate = enddate - duration
     
-        //Often provided by the PlatformState provider
-        timeRange = {
-            begin_time: startdate,
-            duration: null, 
-            end_time: enddate
-        };
+        // // // Often provided by the PlatformState provider
+        // timeRange = {
+        //     begin_time: startdate,
+        //     duration: null, 
+        //     end_time: enddate
+        // };
 
     }
+
+    console.log("timeRange",timeRange)
 
     // Often provided by the PlatformState provider, but not when in first creation mode
     const ctx = {tvMode: false, accountId: c_accountid, filters: undefined, timeRange: timeRange}
