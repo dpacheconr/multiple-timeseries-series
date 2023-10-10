@@ -5,8 +5,10 @@ import {NrqlQuery, Spinner,Grid,GridItem,AutoSizer,PlatformStateContext} from 'n
 import { Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ComposedChart,Area} from 'recharts';
 import { CSVLink } from "react-csv"
 import moment from 'moment';
+import { array } from 'prop-types';
 
 // Global variables
+var _ = require('lodash');
 const defaultColors=['#e6194b', '#3cb44b', '#000000', '#f58231', '#911eb4', '#f032e6', '#bcf60c', '#008080', '#9a6324', '#800000', '#808000', '#000075', '#808080', '#000000']
 let c_accountid
 let trimpercent = 10
@@ -71,27 +73,22 @@ function unixtodatetime(data) {
     })
 }
  
-function exportToCsv (querydata){
-    return []
-    let keys = ["begin_time","end_time"]
+function exportToCsv (querydataImput){
+    var querydata = _.cloneDeep(querydataImput);
+    let keys = ["begin_time","end_time","x","y"]
     let data=querydata.slice(1,querydata.length)
 
-    let c_newdata = querydata[0]
+    var c_newdata = _.cloneDeep(querydata[0]);
 
-    let size = c_newdata.data.length
-
-    data.forEach(el => {
-        el.data.forEach(subel => {
-            for(var i = 0; i < size; i++) {
-                for (let key in subel){
+    data.forEach(array => {
+        array.data.forEach((dict,index) => {
+                for (let key in dict){
                     if (!keys.includes(key)){
-                        c_newdata.data[i][key] = subel[key]
-                        
+                        c_newdata.data[index][key] = dict[key]
                         // also delete unwanted keys in this for loop
-                        // delete c_newdata.data[i]["x"]
-                        // delete c_newdata.data[i]["y"]
+                        delete c_newdata.data[index]["x"]
+                        delete c_newdata.data[index]["y"]
                 }
-            }
         }
         })
     })
@@ -110,13 +107,15 @@ function exportToCsv (querydata){
     c_newdata.data.forEach(array => {
         var tempDict = {};
         for(var i = 0; i < sorted.length; i++) {   
-            tempDict[sorted[i]] = array[sorted[i]];
+            let c_key = String(sorted[i])
+            let item_val = array[sorted[i]]
+            tempDict[c_key]=item_val
+
         }
         output.push(tempDict)
     }
         
     )
-
     return output
 }
 
@@ -572,7 +571,7 @@ function AlignedTimeseries(props) {
         })
 
         // convert unix timestamps to date time
-       // unixtodatetime(queryResults)
+       unixtodatetime(queryResults)
 
         let vizchartData=[]
         let exportchartData=[]
@@ -582,6 +581,7 @@ function AlignedTimeseries(props) {
         queryResults.forEach(r=>{ if(r.data && r.data[0] && r.data[0].metadata.name != "trimmedarea" && r.data[0].metadata.name != "minmaxarea" && r.data[0].metadata.name != "clippedarea") {exportchartData.push(r.data[0])}}) 
         queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name != "min" && r.data[0].metadata.name != "max" && r.data[0].metadata.name != "trimmedmin" && r.data[0].metadata.name != "trimmedmax" && r.data[0].metadata.name != "avg" && r.data[0].metadata.name != "trimmedarea" && r.data[0].metadata.name != "minmaxarea" && r.data[0].metadata.name != "clippedarea" && r.data[0].metadata.name != "clippedmin" && r.data[0].metadata.name != "clippedmax") ){vizchartData.push(r.data[0])}}) 
         
+
         if( avgbol == true ) {
             queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "avg") ){linechartdata.push(r.data[0])}})
             
