@@ -10,7 +10,7 @@ import moment from 'moment';
 const defaultColors=['#e6194b', '#3cb44b', '#000000', '#f58231', '#911eb4', '#f032e6', '#bcf60c', '#008080', '#9a6324', '#800000', '#808000', '#000075', '#808080', '#000000']
 let c_accountid
 let trimpercent = 10
-let clipSize=1
+let clipSize=2
 let avgbol = false
 let globalerror
 const DefaultWindowSize = 60 * 60 * 24  * 1000;
@@ -72,50 +72,52 @@ function unixtodatetime(data) {
 }
  
 function exportToCsv (querydata){
-    let data=[]
-    querydata.forEach(r=>{ if(r.data && r.data[0] && r.data[0].metadata.name != "trimmedarea" && r.data[0].metadata.name != "minmaxarea" && r.data[0].metadata.name != "clippedarea") {data.push(r.data[0])}}) 
-    // console.log("current export when function was called",data)
-    let newdata = []
+    let keys = ["begin_time","end_time"]
+    let data=querydata.slice(1,querydata.length)
+
+    let c_newdata = querydata[0]
+
+    let size = c_newdata.data.length
 
     data.forEach(el => {
         el.data.forEach(subel => {
-            newdata.push(subel)
+            for(var i = 0; i < size; i++) {
+                for (let key in subel){
+                    if (!keys.includes(key)){
+                        c_newdata.data[i][key] = subel[key]
+                        
+                        // also delete unwanted keys in this for loop
+                        delete c_newdata.data[i]["x"]
+                        delete c_newdata.data[i]["y"]
+                }
+            }
+        }
         })
     })
 
-    let keys = ["x","y","begin_time","end_time"]
-    let sorteddata=[]
-    var sorted = [];
-    newdata.map(el => {
-        for(var key in el) {
-            if (!sorted.includes(key)){
-                sorted[0] = "x";
-                sorted[1] = "begin_time";
-                sorted[2] = "end_time";
-                sorted[3] = "y";
-                if (!keys.includes(key)){
-                   sorted[sorted.length] = key
-            }}}
-
-    })  
-    newdata.map(el => {
-        var tempDict = {};
-        for(var i = 0; i < sorted.length; i++) {
-            tempDict[sorted[i]] = el[sorted[i]];
+    let sorted = []
+    for(var key in c_newdata.data[0]) {
+        sorted[0] = "begin_time"
+        sorted[1] = "end_time"
+        if (key != "begin_time" && key != "end_time"){
+            sorted[sorted.length] = key
         }
-        sorteddata.push(tempDict)
-    })
-    sorteddata.sort(function(a, b) {
-        var keyA = a.x,
-          keyB = b.x;
-        if (keyA < keyB) return -1;
-        if (keyA > keyB) return 1;
-        return 0;
-      });
+    }
 
-    return sorteddata
-  }
+    let output = []
 
+    c_newdata.data.forEach(array => {
+        var tempDict = {};
+        for(var i = 0; i < sorted.length; i++) {   
+            tempDict[sorted[i]] = array[sorted[i]];
+        }
+        output.push(tempDict)
+    }
+        
+    )
+
+    return output
+}
 
 function build_json(z,i,array,value) {
     let datatopass={}
@@ -135,13 +137,6 @@ function parse_data(array) {
     })
     return sets
 }
-
-// function parse_time_string(data){
-//     let dateObj = new Date(data);
-//     let utcString = dateObj.toUTCString();
-//     let time = utcString.slice(5,-4);
-//     return time
-// }
 
 function calculatedata(data) {
    
@@ -249,19 +244,7 @@ function calculatedata(data) {
     let clippedminset = parse_data(clippedminctrl)
     let clippedmaxset = parse_data(clippedmaxctrl)
 
-
-    // // update queries with calculated data
-    // data.push({"data":[{"data":avgset, "metadata":{"viz":"main","name": "avg","id":"74B5B05EEA583471E03DCBF0123D81CC79CAE0FE9", "color": defaultColors[1]}}],loading: false, error: null})
-    // data.push({"data":[{"data":trimmedareaset, "metadata":{"viz":"main","name": "trimmedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CEE0FE9", "color":defaultColors[2]}}],loading: false, error: null})
-    // data.push({"data":[{"data":trimmedminset, "metadata":{"viz":"main","name": "trimmedmin","id":"02D6A84F7B97E4709A11276615FDAAB3EE2BEE415", "color": defaultColors[2]}}],loading: false, error: null})
-    // data.push({"data":[{"data":trimmedmaxset, "metadata":{"viz":"main","name": "trimmedmax","id":"2C1F4F2BAA2800FD80F50C3811F38D03B52DEEEB1", "color":defaultColors[2]}}],loading: false, error: null})
-    // data.push({"data":[{"data":clippedareaset, "metadata":{"viz":"main","name": "clippedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0JE8", "color": defaultColors[10]}}],loading: false, error: null})
-    // data.push({"data":[{"data":clippedminset, "metadata":{"viz":"main","name": "clippedmin","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0LE8", "color": defaultColors[10]}}],loading: false, error: null})
-    // data.push({"data":[{"data":clippedmaxset, "metadata":{"viz":"main","name": "clippedmax","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE8", "color": defaultColors[10]}}],loading: false, error: null})
-    // data.push({"data":[{"data":minmaxareaset, "metadata":{"viz":"main","name": "minmaxarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE9", "color": defaultColors[11]}}],loading: false, error: null})
-    // data.push({"data":[{"data":minset, "metadata":{"viz":"main","name": "min","id":"625D011FAC794651F25160AD89612DFAAE954C0CB", "color":defaultColors[11]}}],loading: false, error: null})
-    // data.push({"data":[{"data":maxset, "metadata":{"viz":"main","name": "max","id":"DDB4E3844C923B3F794EC52642E22CBE9FC8D8D31", "color": defaultColors[11]}}],loading: false, error: null})
-   
+  
     // update queries with calculated data
     data.push({"data":[{"data":avgset, "metadata":{"viz":"main","name": "avg","id":"74B5B05EEA583471E03DCBF0123D81CC79CAE0FE9", "color": defaultColors[1]}}],loading: false, error: null})
     data.push({"data":[{"data":trimmedareaset, "metadata":{"viz":"main","name": "trimmedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CEE0FE9", "color":'#0262BC66'}}],loading: false, error: null})
@@ -275,9 +258,6 @@ function calculatedata(data) {
     data.push({"data":[{"data":maxset, "metadata":{"viz":"main","name": "max","id":"DDB4E3844C923B3F794EC52642E22CBE9FC8D8D31", "color": defaultColors[11]}}],loading: false, error: null})
    
 }
-
-
-
 
 function AlignedTimeseries(props) {
     const {
@@ -305,7 +285,6 @@ function AlignedTimeseries(props) {
     
     } = props;
     const [queryResults, setQueryResults] = useState(null);
-
 
     let timeRange;
     let overrideTimePicker=false;
@@ -414,15 +393,13 @@ function AlignedTimeseries(props) {
 
     }
 
-console.log("timeRange",timeRange)
+
+    console.log("timeRange",timeRange)
 
     // Often provided by the PlatformState provider, but not when in first creation mode
     const ctx = {tvMode: false, accountId: c_accountid, filters: undefined, timeRange: timeRange}
     const cplatformstatecontext = ctx
     // useContext(PlatformStateContext);
-    // console.log("running ctx is ", cplatformstatecontext)
-
-
 
     useEffect(async () => {      
             let windowsize
@@ -481,6 +458,8 @@ console.log("timeRange",timeRange)
 
             let promises=nrqlQueries.map((q)=>{return NrqlQuery.query({accountIds: [q.accountId], query: q.query,formatTypeenum: NrqlQuery.FORMAT_TYPE.CHART})})
             let data
+            
+
             try {
                 data = await Promise.all(promises)
                 if (data[0].error != null){
@@ -491,15 +470,28 @@ console.log("timeRange",timeRange)
                 console.log(e)
             }
 
-            // name the queries and update the colours
-            let count = 1
-            data.forEach(el => {
-                if (count != 1){
-                    el.data[0].metadata.name = data[0].data[0].metadata.name+(count-1)
-                    el.data[0].metadata.color = defaultColors[count]
-                }
-                count ++
-            })
+
+           // name the queries and update the colours
+           let count = 1
+           data.forEach(el => {
+               if (count != 1){
+                   let c_name = data[0].data[0].metadata.name
+                   el.data[0].metadata.name = data[0].data[0].metadata.name+(count-1)
+                   el.data[0].metadata.color = defaultColors[count]
+                   el.data[0].data.forEach(c_array => {
+                       for( let item in c_array){
+                           if (item == c_name){
+                               let item_val = c_array[item]
+                               delete c_array[item]
+                               item = data[0].data[0].metadata.name+(count-1)
+                               c_array[item]=item_val
+                           }
+                       }
+                   })
+                  
+               }
+               count ++
+           })
 
             calculatedata(data)
             setQueryResults(data)
@@ -524,10 +516,6 @@ console.log("timeRange",timeRange)
 
         return () => clearInterval(interval);            
      },[props]);
-
-    const dataFromState = () => {
-        return queryResults;
-    }
 
     
     if (globalerror != undefined){
@@ -608,9 +596,9 @@ console.log("timeRange",timeRange)
         if (conf_hideoriginaldata == true ) {
             vizchartData=[vizchartData[0]]
         }
-        let c_data = dataFromState()
+
         let outTable= <>
-        <CSVLink filename="QueryData.csv" data={exportToCsv(c_data)}>Download data as CSV</CSVLink>
+        <CSVLink filename="QueryData.csv" data={exportToCsv(exportchartData)}>Download data as CSV</CSVLink>
         </>
         return <AutoSizer>
             {({ width, height }) => (<div style={{ height, width }}>
