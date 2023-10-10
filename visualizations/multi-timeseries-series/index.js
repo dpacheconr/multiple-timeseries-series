@@ -25,7 +25,7 @@ let c_accountid
 let trimpercent = 10
 let clipSize=2
 let avgbol = false
-let globalerror
+
 const DefaultWindowSize = 60 * 60 * 24  * 1000;
 
 
@@ -172,6 +172,9 @@ function parse_data(array) {
     })
     return sets
 }
+
+
+
 
 function calculatedata(data) {
    
@@ -323,8 +326,11 @@ function AlignedTimeseries(props) {
         conf_showdots
     
     } = props;
-    const [queryResults, setQueryResults] = useState(null);
 
+    
+
+    const [queryResults, setQueryResults] = useState(null);
+    const [globalError, setGlobalError] = useState(null);
     let timeRange;
     let overrideTimePicker=false;
 
@@ -374,6 +380,7 @@ function AlignedTimeseries(props) {
 
     //Freetext hour
     if(conf_todaystarttime!=="" && conf_todaystarttime!==null) {
+        console.log("conf_todaystarttime",conf_todaystarttime)
         startunixtime=moment(conf_todaystarttime, "hhmm").valueOf()
     }
     if(conf_todayendtime!=="" && conf_todayendtime!==null) {
@@ -434,102 +441,109 @@ function AlignedTimeseries(props) {
     const ctx = {tvMode: false, accountId: c_accountid, filters: undefined, timeRange: timeRange}
     const cplatformstatecontext = ctx
     // useContext(PlatformStateContext);
+ 
 
-    useEffect(async () => {      
-            let windowsize
-            c_accountid = conf_accountId
-            let mainquery = conf_query
-            avgbol = conf_average
-            let nrqlQueries = [{accountId: c_accountid, query: conf_query, color: getColor(0)} ]
-
-            if (conf_trimpercent != "") {
-                trimpercent = conf_trimpercent
-            }
-            if (conf_clipsize != "") {
-                clipSize = conf_clipsize
-            }
-
-            if(overrideTimePicker) { // if a fixed window has been provided then we use that instead of any values delivered via the time picker.
-                cplatformstatecontext.timeRange = timeRange
-            }
-
-
-             //the amount to shift each window back in time
-
-                let sinceTime, untilTime ;
+    async function  dataLoader() {
+        console.log("Loading data")
+        let windowsize
+        c_accountid = conf_accountId
+        let mainquery = conf_query
+        avgbol = conf_average
+        let nrqlQueries = [{accountId: c_accountid, query: conf_query, color: getColor(0)} ]
     
-                if (cplatformstatecontext.timeRange && cplatformstatecontext.timeRange.duration == null){ //timepicker chosen start and end time
-                    console.log("Time range set by start/end time")
-                    windowsize = (parseInt(cplatformstatecontext.timeRange.end_time) - parseInt(cplatformstatecontext.timeRange.begin_time))
-                    sinceTime = cplatformstatecontext.timeRange.begin_time
-                    untilTime = cplatformstatecontext.timeRange.end_time
-                } else if(cplatformstatecontext.timeRange && cplatformstatecontext.timeRange.duration != null) {  //timepicker value is relative
-                    console.log("Time range set by duration")
-                    windowsize = parseInt(cplatformstatecontext.timeRange.duration)
-                    untilTime = Date.now();
-                    sinceTime =  untilTime - windowsize;
-                } else {
-                    console.log("Time range not set, using default")
-                    windowsize = DefaultWindowSize //no value set, use a default value
-                    untilTime = Date.now();
-                    sinceTime =  untilTime - windowsize;
-                }
-
-                let numCompare = (conf_compare !== null && conf_compare !== "") ? parseInt(conf_compare)  : 0        //default to no compare
-                let timeseriesOption= (conf_timeseries !== null && conf_timeseries !== "") ? conf_timeseries : "AUTO"  // default to auto timeseries
-                for (let i = 0; i <= numCompare; i++) {
-                    let step = historicalStepSize > 0 ? historicalStepSize : windowsize;
-                    let from = sinceTime - (step * i);
-                    let until = untilTime - (step * i);
-                    let query = mainquery + " SINCE " + from + " until "+ until  + " TIMESERIES " + timeseriesOption
-                    if (i == 0 ) { 
-                        nrqlQueries[0].query = query  
-                    } else {
-                        nrqlQueries.push({accountId: c_accountid, query: query, color: getColor(i)}) 
-                    }                
-                }
-
-
-            let promises=nrqlQueries.map((q)=>{return NrqlQuery.query({accountIds: [q.accountId], query: q.query,formatTypeenum: NrqlQuery.FORMAT_TYPE.CHART})})
-            let data
-            
-
-            try {
-                data = await Promise.all(promises)
-                if (data[0].error != null){
-                   console.log(data[0].error.message)
-                   globalerror = data[0].error.message
-                }
-            } catch (e){
-                console.log(e)
+        if (conf_trimpercent != "") {
+            trimpercent = conf_trimpercent
+        }
+        if (conf_clipsize != "") {
+            clipSize = conf_clipsize
+        }
+    
+        if(overrideTimePicker) { // if a fixed window has been provided then we use that instead of any values delivered via the time picker.
+            cplatformstatecontext.timeRange = timeRange
+        }
+    
+    
+         //the amount to shift each window back in time
+    
+            let sinceTime, untilTime ;
+    
+            if (cplatformstatecontext.timeRange && cplatformstatecontext.timeRange.duration == null){ //timepicker chosen start and end time
+                console.log("Time range set by start/end time")
+                windowsize = (parseInt(cplatformstatecontext.timeRange.end_time) - parseInt(cplatformstatecontext.timeRange.begin_time))
+                sinceTime = cplatformstatecontext.timeRange.begin_time
+                untilTime = cplatformstatecontext.timeRange.end_time
+            } else if(cplatformstatecontext.timeRange && cplatformstatecontext.timeRange.duration != null) {  //timepicker value is relative
+                console.log("Time range set by duration")
+                windowsize = parseInt(cplatformstatecontext.timeRange.duration)
+                untilTime = Date.now();
+                sinceTime =  untilTime - windowsize;
+            } else {
+                console.log("Time range not set, using default")
+                windowsize = DefaultWindowSize //no value set, use a default value
+                untilTime = Date.now();
+                sinceTime =  untilTime - windowsize;
             }
-
-
-           // name the queries and update the colours
-           let count = 1
-           data.forEach(el => {
-               if (count != 1){
-                   let c_name = data[0].data[0].metadata.name
-                   el.data[0].metadata.name = data[0].data[0].metadata.name+(count-1)
-                   el.data[0].metadata.color = getColor(count)
-                   el.data[0].data.forEach(c_array => {
-                       for( let item in c_array){
-                           if (item == c_name){
-                               let item_val = c_array[item]
-                               delete c_array[item]
-                               item = data[0].data[0].metadata.name+(count-1)
-                               c_array[item]=item_val
-                           }
+    
+            let numCompare = (conf_compare !== null && conf_compare !== "") ? parseInt(conf_compare)  : 0        //default to no compare
+            let timeseriesOption= (conf_timeseries !== null && conf_timeseries !== "") ? conf_timeseries : "AUTO"  // default to auto timeseries
+            for (let i = 0; i <= numCompare; i++) {
+                let step = historicalStepSize > 0 ? historicalStepSize : windowsize;
+                let from = sinceTime - (step * i);
+                let until = untilTime - (step * i);
+                let query = mainquery + " SINCE " + from + " until "+ until  + " TIMESERIES " + timeseriesOption
+                if (i == 0 ) { 
+                    nrqlQueries[0].query = query  
+                } else {
+                    nrqlQueries.push({accountId: c_accountid, query: query, color: getColor(i)}) 
+                }                
+            }
+    
+    
+        let promises=nrqlQueries.map((q)=>{return NrqlQuery.query({accountIds: [q.accountId], query: q.query,formatTypeenum: NrqlQuery.FORMAT_TYPE.CHART})})
+        let data
+        
+    
+        try {
+            console.log("Loading data")
+            data = await Promise.all(promises)
+            if (data[0].error != null){
+               console.log(data[0].error.message)
+              setGlobalError(data[0].error.message)
+            }
+        } catch (e){
+            console.log(e)
+        }
+    
+    
+       // name the queries and update the colours
+       let count = 1
+       data.forEach(el => {
+           if (count != 1){
+               let c_name = data[0].data[0].metadata.name
+               el.data[0].metadata.name = data[0].data[0].metadata.name+(count-1)
+               el.data[0].metadata.color = getColor(count)
+               el.data[0].data.forEach(c_array => {
+                   for( let item in c_array){
+                       if (item == c_name){
+                           let item_val = c_array[item]
+                           delete c_array[item]
+                           item = data[0].data[0].metadata.name+(count-1)
+                           c_array[item]=item_val
                        }
-                   })
-                  
-               }
-               count ++
-           })
+                   }
+               })
+              
+           }
+           count ++
+       })
+    
+        calculatedata(data)
+        setQueryResults(data)
+    }
 
-            calculatedata(data)
-            setQueryResults(data)
 
+    useEffect(async () => {   
+        dataLoader()   
             let refreshratems = conf_refreshrate === null ? null : parseInt(conf_refreshrate)*1000
 
             if(refreshratems === null ) {
@@ -544,18 +558,22 @@ function AlignedTimeseries(props) {
                 } 
 
             }
+            
             if(refreshratems>0) {
-                setInterval(() => {console.log("Will refresh the data again in ",refreshratems);setQueryResults(data);}, refreshratems);
+                console.log("Will refresh the data again in ",refreshratems);
+                setInterval(() => {dataLoader();}, refreshratems);
             }
         
 
 
         return () => clearInterval(interval);            
-     },[props]);
+     },{...props});
 
     
-    if (globalerror != undefined){
-        return <div><Spinner inline/>ERROR: {globalerror}</div>
+     if (globalError != undefined){
+        return <div className="EmptyState">
+        <div className="loader">ERROR: {globalError}</div>
+        </div>
 
     } else if(queryResults) {
         let seriesAlignment = !conf_alignment || conf_alignment =="" ? "start" : conf_alignment
@@ -632,7 +650,6 @@ function AlignedTimeseries(props) {
         }
 
         //Hide future data
-        console.log("viz0",vizchartData[0])
         let referencePoint=null;
         let nowTime =  Date.now()
         vizchartData[0].data.forEach((d,idx)=>{
