@@ -496,23 +496,25 @@ function AlignedTimeseries(props) {
             calculatedata(data)
             setQueryResults(data)
 
-           //TODO: Refactor to resize on window size
-            let refreshratems = conf_refreshrate==="" ? null : parseInt(conf_refreshrate)*1000
+            let refreshratems = conf_refreshrate === null ? null : parseInt(conf_refreshrate)*1000
+
             if(refreshratems === null ) {
-                if (conf_timeseries.includes("second")) { // if the window size is 1 hour or more
-                    refreshratems = 10*1000 // 10 seconds in ms
-                } else if (conf_timeseries.includes("minute")) {
-                    refreshratems = 30*1000 // 30 seconds in ms
-                } else if (conf_timeseries.includes("hour") || conf_timeseries.includes("week")) { 
-                    refreshratems = 1800*1000 // 30 minutes   
-                } else {
-                    refreshratems = 5*1000 // 5 seconds in ms
-                }
+                if (windowsize <= 60000) { // 1 minute or less -> refresh every 10 seconds
+                    refreshratems = 10*1000 
+                } else if (windowsize <= 300000 ) { //1 minute to 5 minutes -> refresh every 30 seconds
+                    refreshratems = 30*1000 
+                } else if (windowsize <= 3600000 ) { // 5 minutes to 60 minutes -> refresh every 1 minute 
+                    refreshratems = 60*1000 
+                } else { // over 60 minutes -> refresh every 5 minutes
+                    refreshratems = 60*5*1000
+                } 
+
             }
             if(refreshratems>0) {
                 setInterval(() => {console.log("Will refresh the data again in ",refreshratems);setQueryResults(data);}, refreshratems);
             }
-            
+        
+
 
         return () => clearInterval(interval);            
      },[props]);
