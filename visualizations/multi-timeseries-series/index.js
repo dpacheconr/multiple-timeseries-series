@@ -6,10 +6,21 @@ import { Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ComposedChart,Area,
 import { CSVLink } from "react-csv"
 import moment from 'moment';
 import { array } from 'prop-types';
+import chroma from "chroma-js";
 
 // Global variables
 var _ = require('lodash');
-const defaultColors=['#e6194b', '#3cb44b', '#000000', '#f58231', '#911eb4', '#f032e6', '#bcf60c', '#008080', '#9a6324', '#800000', '#808000', '#000075', '#808080', '#000000']
+const colorThemes={
+
+    "pale": {
+        primary: "#f58231",
+        clippedArea: "#22DC6499",
+        trimmedArea: "#0262BC66",
+        minmaxArea: "#66666666",
+        history: ["#fd7f6f", "#7eb0d5", "#b2e061", "#bd7ebe", "#ffb55a", "#ffee65", "#beb9db", "#fdcce5", "#8bd3c7"],
+    }
+    
+}
 let c_accountid
 let trimpercent = 10
 let clipSize=2
@@ -17,7 +28,8 @@ let avgbol = false
 let globalerror
 const DefaultWindowSize = 60 * 60 * 24  * 1000;
 
-export function convertTimestampToDate(timestamp) {
+
+ function convertTimestampToDate(timestamp) {
     let value = timestamp
     let dateObj = new Date(value);
     let utcString = dateObj.toUTCString();
@@ -25,6 +37,17 @@ export function convertTimestampToDate(timestamp) {
     return time
   }
 
+function getColor(index) {
+    let theme="pale"
+    let colorTheme=colorThemes[theme];
+    if(colorTheme[index]) {
+        return colorTheme[index]
+    } else {
+        let numColors=colorTheme.history.length;
+        const chosen =  index % numColors;
+        return colorTheme.history[chosen]
+    }
+}
 
 function avgfunction (array) {
     let sum = 0;
@@ -258,16 +281,16 @@ function calculatedata(data) {
 
   
     // update queries with calculated data
-    data.push({"data":[{"data":avgset, "metadata":{"viz":"main","name": "avg","id":"74B5B05EEA583471E03DCBF0123D81CC79CAE0FE9", "color": defaultColors[1]}}],loading: false, error: null})
-    data.push({"data":[{"data":trimmedareaset, "metadata":{"viz":"main","name": "trimmedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CEE0FE9", "color":'#0262BC66'}}],loading: false, error: null})
-    data.push({"data":[{"data":trimmedminset, "metadata":{"viz":"main","name": "trimmedmin","id":"02D6A84F7B97E4709A11276615FDAAB3EE2BEE415", "color": defaultColors[2]}}],loading: false, error: null})
-    data.push({"data":[{"data":trimmedmaxset, "metadata":{"viz":"main","name": "trimmedmax","id":"2C1F4F2BAA2800FD80F50C3811F38D03B52DEEEB1", "color":defaultColors[2]}}],loading: false, error: null})
-    data.push({"data":[{"data":clippedareaset, "metadata":{"viz":"main","name": "clippedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0JE8", "color": '#22DC6499'}}],loading: false, error: null})
-    data.push({"data":[{"data":clippedminset, "metadata":{"viz":"main","name": "clippedmin","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0LE8", "color": defaultColors[10]}}],loading: false, error: null})
-    data.push({"data":[{"data":clippedmaxset, "metadata":{"viz":"main","name": "clippedmax","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE8", "color": defaultColors[10]}}],loading: false, error: null})
-    data.push({"data":[{"data":minmaxareaset, "metadata":{"viz":"main","name": "minmaxarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE9", "color": '#66666666'}}],loading: false, error: null})
-    data.push({"data":[{"data":minset, "metadata":{"viz":"main","name": "min","id":"625D011FAC794651F25160AD89612DFAAE954C0CB", "color":defaultColors[11]}}],loading: false, error: null})
-    data.push({"data":[{"data":maxset, "metadata":{"viz":"main","name": "max","id":"DDB4E3844C923B3F794EC52642E22CBE9FC8D8D31", "color": defaultColors[11]}}],loading: false, error: null})
+    data.push({"data":[{"data":avgset, "metadata":{"viz":"main","name": "avg","id":"74B5B05EEA583471E03DCBF0123D81CC79CAE0FE9", "color": getColor(1)}}],loading: false, error: null})
+    data.push({"data":[{"data":trimmedareaset, "metadata":{"viz":"main","name": "trimmedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CEE0FE9", "color":getColor("trimmedArea")}}],loading: false, error: null})
+    data.push({"data":[{"data":trimmedminset, "metadata":{"viz":"main","name": "trimmedmin","id":"02D6A84F7B97E4709A11276615FDAAB3EE2BEE415", "color": getColor(2)}}],loading: false, error: null})
+    data.push({"data":[{"data":trimmedmaxset, "metadata":{"viz":"main","name": "trimmedmax","id":"2C1F4F2BAA2800FD80F50C3811F38D03B52DEEEB1", "color":getColor(2)}}],loading: false, error: null})
+    data.push({"data":[{"data":clippedareaset, "metadata":{"viz":"main","name": "clippedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0JE8", "color": getColor("clippedArea")}}],loading: false, error: null})
+    data.push({"data":[{"data":clippedminset, "metadata":{"viz":"main","name": "clippedmin","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0LE8", "color": getColor(3)}}],loading: false, error: null})
+    data.push({"data":[{"data":clippedmaxset, "metadata":{"viz":"main","name": "clippedmax","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE8", "color": getColor(3)}}],loading: false, error: null})
+    data.push({"data":[{"data":minmaxareaset, "metadata":{"viz":"main","name": "minmaxarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE9", "color": getColor("minmaxArea")}}],loading: false, error: null})
+    data.push({"data":[{"data":minset, "metadata":{"viz":"main","name": "min","id":"625D011FAC794651F25160AD89612DFAAE954C0CB", "color":getColor(3)}}],loading: false, error: null})
+    data.push({"data":[{"data":maxset, "metadata":{"viz":"main","name": "max","id":"DDB4E3844C923B3F794EC52642E22CBE9FC8D8D31", "color": getColor(3)}}],loading: false, error: null})
    
 }
 
@@ -409,8 +432,6 @@ function AlignedTimeseries(props) {
     }
 
 
-    console.log("timeRange",timeRange)
-
     // Often provided by the PlatformState provider, but not when in first creation mode
     const ctx = {tvMode: false, accountId: c_accountid, filters: undefined, timeRange: timeRange}
     const cplatformstatecontext = ctx
@@ -421,7 +442,7 @@ function AlignedTimeseries(props) {
             c_accountid = conf_accountId
             let mainquery = conf_query
             avgbol = conf_average
-            let nrqlQueries = [{accountId: c_accountid, query: conf_query, color: defaultColors[Math.floor(Math.random() * defaultColors.length)]} ]
+            let nrqlQueries = [{accountId: c_accountid, query: conf_query, color: getColor(0)} ]
 
             if (conf_trimpercent != "") {
                 trimpercent = conf_trimpercent
@@ -466,7 +487,7 @@ function AlignedTimeseries(props) {
                     if (i == 0 ) { 
                         nrqlQueries[0].query = query  
                     } else {
-                        nrqlQueries.push({accountId: c_accountid, query: query, color: defaultColors[Math.floor(Math.random() * defaultColors.length)]}) 
+                        nrqlQueries.push({accountId: c_accountid, query: query, color: getColor(i)}) 
                     }                
                 }
 
@@ -492,7 +513,7 @@ function AlignedTimeseries(props) {
                if (count != 1){
                    let c_name = data[0].data[0].metadata.name
                    el.data[0].metadata.name = data[0].data[0].metadata.name+(count-1)
-                   el.data[0].metadata.color = defaultColors[count]
+                   el.data[0].metadata.color = getColor(count)
                    el.data[0].data.forEach(c_array => {
                        for( let item in c_array){
                            if (item == c_name){
@@ -612,6 +633,19 @@ function AlignedTimeseries(props) {
             vizchartData=[vizchartData[0]]
         }
 
+        //Hide future data
+        console.log("viz0",vizchartData[0])
+        let referencePoint=null;
+        let nowTime =  Date.now()
+        vizchartData[0].data.forEach((d,idx)=>{
+            if(d.begin_time > nowTime || d.end_time > nowTime) {
+                d.y = null
+                if(referencePoint==null && idx > 0) {
+                    referencePoint=idx-1
+                }
+            }
+            
+        })
 
         //CHart configuration options
         let yLabel=null
@@ -640,6 +674,7 @@ function AlignedTimeseries(props) {
             showDots = conf_showdots;
         }
 
+        let refPoint= (referencePoint == null) ? null : <ReferenceDot fill={getColor('primary')}  x={vizchartData[0].data[referencePoint].x} y={vizchartData[0].data[referencePoint].y} isFront={true}/>;
         let outTable= <>
             <CSVLink filename="QueryData.csv" data={exportToCsv(exportchartData)}>Download data as CSV</CSVLink>
         </>
@@ -668,7 +703,7 @@ function AlignedTimeseries(props) {
           {linechartdata.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={5} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>))}   
           {arechartdata.map((s) => (<Area type="monotone" fill={s.metadata.color} dataKey="y" data={s.data}  name={s.metadata.name} strokeWidth={0} key={s.metadata.name}/>))}
           {vizchartData.map((s) => {return <Line type="linear" dot={showDots} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>})}
-          <ReferenceDot fill="#f58231" labe="Number" x={vizchartData[0].data[vizchartData[0].data.length-5].x} y={vizchartData[0].data[vizchartData[0].data.length-5].y} isFront={true}/>
+          {refPoint}
         </ComposedChart>
         <Grid>
             <GridItem columnSpan={12}>
