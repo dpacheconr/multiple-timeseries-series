@@ -72,6 +72,7 @@ function unixtodatetime(data) {
 }
  
 function exportToCsv (querydata){
+    return []
     let keys = ["begin_time","end_time"]
     let data=querydata.slice(1,querydata.length)
 
@@ -87,8 +88,8 @@ function exportToCsv (querydata){
                         c_newdata.data[i][key] = subel[key]
                         
                         // also delete unwanted keys in this for loop
-                        delete c_newdata.data[i]["x"]
-                        delete c_newdata.data[i]["y"]
+                        // delete c_newdata.data[i]["x"]
+                        // delete c_newdata.data[i]["y"]
                 }
             }
         }
@@ -441,12 +442,13 @@ function AlignedTimeseries(props) {
                     sinceTime =  untilTime - windowsize;
                 }
                 console.log("historicalStepSize",historicalStepSize)
-
-                for (let i = 0; i <= conf_compare; i++) {
+                let numCompare = (conf_compare !== null && conf_compare !== "") ? parseInt(conf_compare)  : 0        //default to no compare
+                let timeseriesOption= (conf_timeseries !== null && conf_timeseries !== "") ? conf_timeseries : "AUTO"  // default to auto timeseries
+                for (let i = 0; i <= numCompare; i++) {
                     let step = historicalStepSize > 0 ? historicalStepSize : windowsize;
                     let from = sinceTime - (step * i);
                     let until = untilTime - (step * i);
-                    let query = mainquery + " SINCE " + from + " until "+ until  + " TIMESERIES " + conf_timeseries
+                    let query = mainquery + " SINCE " + from + " until "+ until  + " TIMESERIES " + timeseriesOption
                     if (i == 0 ) { 
                         nrqlQueries[0].query = query  
                     } else {
@@ -454,7 +456,6 @@ function AlignedTimeseries(props) {
                     }                
                 }
 
-            console.log(nrqlQueries)
 
             let promises=nrqlQueries.map((q)=>{return NrqlQuery.query({accountIds: [q.accountId], query: q.query,formatTypeenum: NrqlQuery.FORMAT_TYPE.CHART})})
             let data
@@ -496,7 +497,7 @@ function AlignedTimeseries(props) {
             calculatedata(data)
             setQueryResults(data)
 
-
+           //TODO: Refactor to resize on window size
             let refreshratems = conf_refreshrate==="" ? null : parseInt(conf_refreshrate)*1000
             if(refreshratems === null ) {
                 if (conf_timeseries.includes("second")) { // if the window size is 1 hour or more
@@ -567,7 +568,7 @@ function AlignedTimeseries(props) {
         })
 
         // convert unix timestamps to date time
-        unixtodatetime(queryResults)
+       // unixtodatetime(queryResults)
 
         let vizchartData=[]
         let exportchartData=[]
@@ -593,12 +594,12 @@ function AlignedTimeseries(props) {
             queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "clippedarea") ){arechartdata.push(r.data[0])}})
         }
         
-        if (conf_hideoriginaldata == true ) {
+        if (conf_hideoriginaldata === true ) {
             vizchartData=[vizchartData[0]]
         }
 
         let outTable= <>
-        <CSVLink filename="QueryData.csv" data={exportToCsv(exportchartData)}>Download data as CSV</CSVLink>
+            <CSVLink filename="QueryData.csv" data={exportToCsv(exportchartData)}>Download data as CSV</CSVLink>
         </>
         return <AutoSizer>
             {({ width, height }) => (<div style={{ height, width }}>
@@ -612,9 +613,12 @@ function AlignedTimeseries(props) {
           linechartdata.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={5} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>))
           }   
           {arechartdata.map((s) => (<Area type="monotone" fill={s.metadata.color} dataKey="y" data={s.data}  name={s.metadata.name} strokeWidth={0} key={s.metadata.name}/>))}
-          {vizchartData.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>
-          ))
+          {vizchartData.map((s) => {return <Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>
+    })
           }
+        
+
+           
         </ComposedChart>
         <Grid>
             <GridItem columnSpan={12}>
