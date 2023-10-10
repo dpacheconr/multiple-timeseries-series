@@ -647,7 +647,7 @@ function AlignedTimeseries(props) {
             {({ width, height }) => (<div style={{ height: height, width: width }}>
             <ComposedChart width={width} height={height} margin={{top: 10, right: 50, bottom: 30, left: LeftMargin}}>
           <CartesianGrid strokeDasharray="3 3" /> 
-          <XAxis tickFormatter={convertTimestampToDate} dataKey="x"  type="category" allowDuplicatedCategory={false} style={{
+          <XAxis tickFormatter={convertTimestampToDate} dataKey="x"  type="category" allowDuplicatedCategory={false} interval="equidistantPreserveStart"  style={{
                     fontSize: '0.8rem',
                     fontFamily: '"Inter", "Segoe UI", "Tahoma", sans-serif'
                 }}/>
