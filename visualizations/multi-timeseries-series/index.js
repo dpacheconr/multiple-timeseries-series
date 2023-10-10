@@ -374,11 +374,9 @@ function AlignedTimeseries(props) {
 
     //Freetext hour
     if(conf_todaystarttime!=="" && conf_todaystarttime!==null) {
-        console.log("Start time",moment(conf_todaystarttime, "hhmm").format())
         startunixtime=moment(conf_todaystarttime, "hhmm").valueOf()
     }
     if(conf_todayendtime!=="" && conf_todayendtime!==null) {
-        console.log("Start time",moment(conf_todayendtime, "hhmm").format())
         endunixtime=moment(conf_todayendtime, "hhmm").valueOf()
     }
 
@@ -461,7 +459,7 @@ function AlignedTimeseries(props) {
                 let sinceTime, untilTime ;
     
                 if (cplatformstatecontext.timeRange && cplatformstatecontext.timeRange.duration == null){ //timepicker chosen start and end time
-                    console.log("Time range ste by start/end time")
+                    console.log("Time range set by start/end time")
                     windowsize = (parseInt(cplatformstatecontext.timeRange.end_time) - parseInt(cplatformstatecontext.timeRange.begin_time))
                     sinceTime = cplatformstatecontext.timeRange.begin_time
                     untilTime = cplatformstatecontext.timeRange.end_time
@@ -476,7 +474,7 @@ function AlignedTimeseries(props) {
                     untilTime = Date.now();
                     sinceTime =  untilTime - windowsize;
                 }
-                console.log("historicalStepSize",historicalStepSize)
+
                 let numCompare = (conf_compare !== null && conf_compare !== "") ? parseInt(conf_compare)  : 0        //default to no compare
                 let timeseriesOption= (conf_timeseries !== null && conf_timeseries !== "") ? conf_timeseries : "AUTO"  // default to auto timeseries
                 for (let i = 0; i <= numCompare; i++) {
