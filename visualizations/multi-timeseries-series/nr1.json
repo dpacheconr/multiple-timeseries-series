@@ -149,6 +149,22 @@
             "type": "string"
         },
         {
+            "name": "conf_colortheme",
+            "title": "Color theme",
+            "description": "Colour theme to use",
+            "type": "enum",
+            "items": [
+                {
+                  "title": "Pale",
+                  "value": "pale"
+                },
+                {
+                    "title": "Strong",
+                    "value": "strong"
+                }
+            ]
+        },
+        {
             "name": "conf_alignment",
             "title": "Alignment",
             "description": "How the timeseries should be aligned",
