@@ -112,41 +112,30 @@ function AlignedTimeseries(props) {
     
     } = props;
 
-    function unixtodatetime(dataImput) {
-        console.log("data imputed",dataImput)
-        let keys = ["x","begin_time","end_time"]
-        var data = _.cloneDeep(dataImput);
-        data.map((s) => {
-            for (let item in s){
-                if (item == "data"){
-                    for (let subitem in s[item]) {
-                        for (let i in s[item][subitem].data){
-                            for (let j in s[item][subitem].data[i]){
-                                if (keys.includes(j)){
-                                    let value = s[item][subitem].data[i][j]
-                                    let time = moment(value).format(conf_datetimestringformat_tooltip)
-                                    s[item][subitem].data[i][j] = time
-
-                                }
-                            }
-    
-                        }
-                    }
-                        
-                    }
-                }
-        })
-        return data
-    }
-
-    function convertTimestampToDate(timestamp,objname) {
-        var dayWrapper
+    function convertTimestampToDate(timestamp,objname,windowsize) {
+        var output
         if (objname == "tooltip"){
-            dayWrapper = moment(timestamp).format(conf_datetimestringformat_tooltip)
+            let formatter= (conf_datetimestringformat_tooltip === null || conf_datetimestringformat_tooltip==="") ? "YYYY/MM/DD hh:mm:ss" : conf_datetimestringformat_tooltip
+            output = moment(timestamp).format(formatter)
         } else {
-            dayWrapper = moment(timestamp).format(conf_datetimestringformat_xaxis)
+            let formatter='yyyy/mm/dd hh:mm'
+            if(conf_datetimestringformat_xaxis === null || conf_datetimestringformat_xaxis==="") {
+                let winsizesecs=windowsize/1000
+                if(winsizesecs <= moment.duration("PT1H").asSeconds()) {
+                    formatter="hh:mm:ss"
+                } else if(winsizesecs <= moment.duration("PT24H").asSeconds()) {
+                    formatter="hh:mm"
+                } else if( winsizesecs <= moment.duration("P31D").asSeconds() ){
+                    formatter="YYYY/MM/DD hh:mm"
+                } else {
+                    formatter="YYYY/MM/DD hha"
+                }
+            } else {
+                formatter=conf_datetimestringformat_xaxis
+            }
+            output = moment(timestamp).format(formatter);
         }
-        return dayWrapper
+        return output
     }
     function exportToCsv (querydataImput){
         var querydata = _.cloneDeep(querydataImput);
@@ -407,9 +396,10 @@ function AlignedTimeseries(props) {
 
     const [queryResults, setQueryResults] = useState(null);
     const [globalError, setGlobalError] = useState(null);
+    const [windowsize, setWindowsize] = useState(null);
     let timeRange;
     let overrideTimePicker=false;
-    let windowsize
+
 
 
     //determine time window overrides
@@ -546,19 +536,21 @@ function AlignedTimeseries(props) {
     
             if (cplatformstatecontext.timeRange && cplatformstatecontext.timeRange.duration == null){ //timepicker chosen start and end time
                 console.log("Time range set by start/end time")
-                windowsize = (parseInt(cplatformstatecontext.timeRange.end_time) - parseInt(cplatformstatecontext.timeRange.begin_time))
+                setWindowsize(  (parseInt(cplatformstatecontext.timeRange.end_time) - parseInt(cplatformstatecontext.timeRange.begin_time)) );
                 sinceTime = cplatformstatecontext.timeRange.begin_time
                 untilTime = cplatformstatecontext.timeRange.end_time
             } else if(cplatformstatecontext.timeRange && cplatformstatecontext.timeRange.duration != null) {  //timepicker value is relative
                 console.log("Time range set by duration")
-                windowsize = parseInt(cplatformstatecontext.timeRange.duration)
+                let winsize = parseInt(cplatformstatecontext.timeRange.duration)
                 untilTime = Date.now();
-                sinceTime =  untilTime - windowsize;
+                sinceTime =  untilTime - winsize;
+                setWindowsize(winsize)
             } else {
                 console.log("Time range not set, using default")
-                windowsize = DefaultWindowSize //no value set, use a default value
+                //no value set, use a default value
                 untilTime = Date.now();
-                sinceTime =  untilTime - windowsize;
+                sinceTime =  untilTime - DefaultWindowSize;
+                setWindowsize(DefaultWindowSize)
             }
     
             let numCompare = (conf_compare !== null && conf_compare !== "") ? parseInt(conf_compare)  : 0        //default to no compare
@@ -777,7 +769,7 @@ function AlignedTimeseries(props) {
             {({ width, height }) => (<div style={{ height: height, width: width }}>
             <ComposedChart width={width} height={height} margin={{top: 10, right: 50, bottom: 30, left: LeftMargin}}>
           <CartesianGrid strokeDasharray="3 3" /> 
-          <XAxis tickFormatter={convertTimestampToDate} dataKey="x"  type="category" allowDuplicatedCategory={false} interval="equidistantPreserveStart"  style={{
+          <XAxis tickFormatter={(x)=>{return convertTimestampToDate(x,'xtick',windowsize);}} dataKey="x"  type="category" allowDuplicatedCategory={false} interval="equidistantPreserveStart"  style={{
                     fontSize: '0.8rem',
                     fontFamily: '"Inter", "Segoe UI", "Tahoma", sans-serif'
                 }}/>
@@ -793,7 +785,7 @@ function AlignedTimeseries(props) {
                     fontFamily: '"Inter", "Segoe UI", "Tahoma", sans-serif'
                 }}
             />
-          <Tooltip labelFormatter={(value)=>{return convertTimestampToDate(value,'tooltip');}} />
+          <Tooltip labelFormatter={(value)=>{return convertTimestampToDate(value,'tooltip',windowsize);}} />
           <Legend />
           {linechartdata.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={5} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>))}   
           {arechartdata.map((s) => (<Area type="monotone" fill={s.metadata.color} dataKey="y" data={s.data}  name={s.metadata.name} strokeWidth={0} key={s.metadata.name}/>))}
