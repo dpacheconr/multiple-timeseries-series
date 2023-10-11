@@ -120,6 +120,7 @@ function AlignedTimeseries(props) {
         } else {
             let formatter='yyyy/mm/dd hh:mm'
             if(conf_datetimestringformat_xaxis === null || conf_datetimestringformat_xaxis==="") {
+                //automatic formatting of dates based on window size
                 let winsizesecs=windowsize/1000
                 if(winsizesecs <= moment.duration("PT1H").asSeconds()) {
                     formatter="hh:mm:ss"
