@@ -125,6 +125,18 @@
             "type": "string"
         },
         {
+            "name": "conf_datetimestringformat_xaxis",
+            "title": "Datetime string format for x axis and CSV",
+            "description": "Datetime string format for x axis and CSV",
+            "type": "string"
+        },
+        {
+            "name": "conf_datetimestringformat_tooltip",
+            "title": "Datetime string format for tooltip",
+            "description": "Datetime string format for tooltip",
+            "type": "string"
+        },
+        {
             "name": "conf_showdots",
             "title": "Show dots",
             "description": "Show dots on line chart",

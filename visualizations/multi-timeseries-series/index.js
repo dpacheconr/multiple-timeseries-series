@@ -19,13 +19,7 @@ let avgbol = false
 const DefaultWindowSize = 60 * 60 * 24  * 1000;
 
 
- function convertTimestampToDate(timestamp) {
-    let value = timestamp
-    let dateObj = new Date(value);
-    let utcString = dateObj.toUTCString();
-    let time = utcString.slice(5,-4);
-    return time
-  }
+
 
 
 
@@ -58,81 +52,9 @@ function getMinMax(data) {
     return [minValue,maxValue]
 }
 
-function unixtodatetime(data) {
-    let keys = ["x","begin_time","end_time"]
-    data.map((s) => {
-        for (let item in s){
-            if (item == "data"){
-                for (let subitem in s[item]) {
-                    for (let i in s[item][subitem].data){
-                        for (let j in s[item][subitem].data[i]){
-                            if (keys.includes(j)){
-                                let value = s[item][subitem].data[i][j]
-                                let dateObj = new Date(value);
-                                let utcString = dateObj.toUTCString();
-                                let time = utcString.slice(5,-4);
-                                s[item][subitem].data[i][j] = time
-                            }
-                        }
 
-                    }
-                }
-                    
-                }
-            }
-
-    })
-}
  
-function exportToCsv (querydataImput){
-    var querydata = _.cloneDeep(querydataImput);
-    let keys = ["begin_time","end_time","x","y"]
-    let data=querydata.slice(1,querydata.length)
 
-    var c_newdata = _.cloneDeep(querydata[0]);
-
-    data.forEach(array => {
-        array.data.forEach((dict,index) => {
-                for (let key in dict){
-                    if (!keys.includes(key)){
-                        c_newdata.data[index][key] = dict[key]
-                        // also delete unwanted keys in this loop
-                        delete c_newdata.data[index]["x"]
-                        delete c_newdata.data[index]["y"]
-                }
-        }
-        })
-    })
-
-    let sorted = []
-    for(var key in c_newdata.data[0]) {
-        sorted[0] = "begin_time"
-        sorted[1] = "end_time"
-        if (key != "begin_time" && key != "end_time"){
-            sorted[sorted.length] = key
-        }
-    }
-
-    let output = []
-
-    c_newdata.data.forEach(array => {
-        var tempDict = {};
-        for(var i = 0; i < sorted.length; i++) {   
-            if (i <=1) {
-                let c_key = String(sorted[i])
-                let item_val = convertTimestampToDate(array[sorted[i]])
-                tempDict[c_key]= item_val
-            } else {
-            let c_key = String(sorted[i])
-            let item_val = array[sorted[i]]
-            tempDict[c_key]=item_val
-            }
-        }
-        output.push(tempDict)
-    }
-    )
-    return output
-}
 
 function build_json(z,i,array,value) {
     let datatopass={}
@@ -184,10 +106,87 @@ function AlignedTimeseries(props) {
         conf_yaxismax,
         conf_yaxismin,
         conf_showdots,
-        conf_colortheme
+        conf_colortheme,
+        conf_datetimestringformat_xaxis,
+        conf_datetimestringformat_tooltip
     
     } = props;
 
+    function convertTimestampToDate(timestamp,objname,windowsize) {
+        var output
+        if (objname == "tooltip"){
+            let formatter= (conf_datetimestringformat_tooltip === null || conf_datetimestringformat_tooltip==="") ? "YYYY/MM/DD hh:mm:ss" : conf_datetimestringformat_tooltip
+            output = moment(timestamp).format(formatter)
+        } else {
+            let formatter='yyyy/mm/dd hh:mm'
+            if(conf_datetimestringformat_xaxis === null || conf_datetimestringformat_xaxis==="") {
+                //automatic formatting of dates based on window size
+                let winsizesecs=windowsize/1000
+                if(winsizesecs <= moment.duration("PT1H").asSeconds()) {
+                    formatter="hh:mm:ss"
+                } else if(winsizesecs <= moment.duration("PT24H").asSeconds()) {
+                    formatter="hh:mm"
+                } else if( winsizesecs <= moment.duration("P31D").asSeconds() ){
+                    formatter="YYYY/MM/DD hh:mm"
+                } else {
+                    formatter="YYYY/MM/DD hha"
+                }
+            } else {
+                formatter=conf_datetimestringformat_xaxis
+            }
+            output = moment(timestamp).format(formatter);
+        }
+        return output
+    }
+    function exportToCsv (querydataImput){
+        var querydata = _.cloneDeep(querydataImput);
+        let keys = ["begin_time","end_time","x","y"]
+        let data=querydata.slice(1,querydata.length)
+    
+        var c_newdata = _.cloneDeep(querydata[0]);
+    
+        data.forEach(array => {
+            array.data.forEach((dict,index) => {
+                    for (let key in dict){
+                        if (!keys.includes(key)){
+                            c_newdata.data[index][key] = dict[key]
+                            // also delete unwanted keys in this loop
+                            delete c_newdata.data[index]["x"]
+                            delete c_newdata.data[index]["y"]
+                    }
+            }
+            })
+        })
+    
+        let sorted = []
+        for(var key in c_newdata.data[0]) {
+            sorted[0] = "begin_time"
+            sorted[1] = "end_time"
+            if (key != "begin_time" && key != "end_time"){
+                sorted[sorted.length] = key
+            }
+        }
+    
+        let output = []
+    
+        c_newdata.data.forEach(array => {
+            var tempDict = {};
+            for(var i = 0; i < sorted.length; i++) {   
+                if (i <=1) {
+                    let c_key = String(sorted[i])
+                    let item_val = convertTimestampToDate(array[sorted[i]])
+                    tempDict[c_key]= item_val
+                } else {
+                let c_key = String(sorted[i])
+                let item_val = array[sorted[i]]
+                tempDict[c_key]=item_val
+                }
+            }
+            output.push(tempDict)
+        }
+        )
+        return output
+    }
 
     function calculatedata(data) {
    
@@ -398,8 +397,10 @@ function AlignedTimeseries(props) {
 
     const [queryResults, setQueryResults] = useState(null);
     const [globalError, setGlobalError] = useState(null);
+    const [windowsize, setWindowsize] = useState(null);
     let timeRange;
     let overrideTimePicker=false;
+
 
 
     //determine time window overrides
@@ -512,7 +513,7 @@ function AlignedTimeseries(props) {
 
     async function  dataLoader() {
         console.log("Loading data")
-        let windowsize
+
         c_accountid = conf_accountId
         let mainquery = conf_query
         avgbol = conf_average
@@ -536,19 +537,21 @@ function AlignedTimeseries(props) {
     
             if (cplatformstatecontext.timeRange && cplatformstatecontext.timeRange.duration == null){ //timepicker chosen start and end time
                 console.log("Time range set by start/end time")
-                windowsize = (parseInt(cplatformstatecontext.timeRange.end_time) - parseInt(cplatformstatecontext.timeRange.begin_time))
+                setWindowsize(  (parseInt(cplatformstatecontext.timeRange.end_time) - parseInt(cplatformstatecontext.timeRange.begin_time)) );
                 sinceTime = cplatformstatecontext.timeRange.begin_time
                 untilTime = cplatformstatecontext.timeRange.end_time
             } else if(cplatformstatecontext.timeRange && cplatformstatecontext.timeRange.duration != null) {  //timepicker value is relative
                 console.log("Time range set by duration")
-                windowsize = parseInt(cplatformstatecontext.timeRange.duration)
+                let winsize = parseInt(cplatformstatecontext.timeRange.duration)
                 untilTime = Date.now();
-                sinceTime =  untilTime - windowsize;
+                sinceTime =  untilTime - winsize;
+                setWindowsize(winsize)
             } else {
                 console.log("Time range not set, using default")
-                windowsize = DefaultWindowSize //no value set, use a default value
+                //no value set, use a default value
                 untilTime = Date.now();
-                sinceTime =  untilTime - windowsize;
+                sinceTime =  untilTime - DefaultWindowSize;
+                setWindowsize(DefaultWindowSize)
             }
     
             let numCompare = (conf_compare !== null && conf_compare !== "") ? parseInt(conf_compare)  : 0        //default to no compare
@@ -732,7 +735,7 @@ function AlignedTimeseries(props) {
             
         })
 
-        //CHart configuration options
+        //Chart configuration options
         let yLabel=null
         let LeftMargin = 0
         if(conf_yaxislabel !== "" & conf_yaxislabel!== null) {
@@ -767,7 +770,7 @@ function AlignedTimeseries(props) {
             {({ width, height }) => (<div style={{ height: height, width: width }}>
             <ComposedChart width={width} height={height} margin={{top: 10, right: 50, bottom: 30, left: LeftMargin}}>
           <CartesianGrid strokeDasharray="3 3" /> 
-          <XAxis tickFormatter={convertTimestampToDate} dataKey="x"  type="category" allowDuplicatedCategory={false} interval="equidistantPreserveStart"  style={{
+          <XAxis tickFormatter={(x)=>{return convertTimestampToDate(x,'xtick',windowsize);}} dataKey="x"  type="category" allowDuplicatedCategory={false} interval="equidistantPreserveStart"  style={{
                     fontSize: '0.8rem',
                     fontFamily: '"Inter", "Segoe UI", "Tahoma", sans-serif'
                 }}/>
@@ -783,7 +786,7 @@ function AlignedTimeseries(props) {
                     fontFamily: '"Inter", "Segoe UI", "Tahoma", sans-serif'
                 }}
             />
-          <Tooltip />
+          <Tooltip labelFormatter={(value)=>{return convertTimestampToDate(value,'tooltip',windowsize);}} />
           <Legend />
           {linechartdata.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={5} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>))}   
           {arechartdata.map((s) => (<Area type="monotone" fill={s.metadata.color} dataKey="y" data={s.data}  name={s.metadata.name} strokeWidth={0} key={s.metadata.name}/>))}
@@ -792,8 +795,7 @@ function AlignedTimeseries(props) {
         </ComposedChart>
         <Grid>
             <GridItem columnSpan={12}>
-            {outTable}
-            </GridItem>
+            {outTable}            </GridItem>
         </Grid>
           </div>
         )}
