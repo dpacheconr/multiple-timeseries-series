@@ -527,8 +527,6 @@ function AlignedTimeseries(props) {
     const cplatformstatecontext = useContext(PlatformStateContext);
 
     async function  dataLoader() {
-        console.log("Loading data")
-
         c_accountid = conf_accountId
         let mainquery = conf_query
         avgbol = conf_average
