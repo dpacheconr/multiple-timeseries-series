@@ -589,7 +589,6 @@ function AlignedTimeseries(props) {
         
     
         try {
-            console.log("Querying New Relic")
             data = await Promise.all(promises)
             if (data[0].error != null){
                console.log(data[0].error.message)
