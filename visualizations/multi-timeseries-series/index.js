@@ -59,7 +59,7 @@ function getMinMax(data) {
 }
 
 function unixtodatetime(data) {
-    let keys = ["x","begin_time","end_time"]
+    let keys = ["begin_time","end_time"]
     data.map((s) => {
         for (let item in s){
             if (item == "data"){
@@ -187,7 +187,6 @@ function AlignedTimeseries(props) {
         conf_colortheme
     
     } = props;
-
 
     function calculatedata(data) {
    
@@ -400,6 +399,7 @@ function AlignedTimeseries(props) {
     const [globalError, setGlobalError] = useState(null);
     let timeRange;
     let overrideTimePicker=false;
+    let windowsize
 
 
     //determine time window overrides
@@ -512,7 +512,7 @@ function AlignedTimeseries(props) {
 
     async function  dataLoader() {
         console.log("Loading data")
-        let windowsize
+
         c_accountid = conf_accountId
         let mainquery = conf_query
         avgbol = conf_average
@@ -687,6 +687,9 @@ function AlignedTimeseries(props) {
             }
         })
 
+        // update tooltip with human readable datetime
+        unixtodatetime(queryResults)
+
         let vizchartData=[]
         let exportchartData=[]
         let linechartdata = []
@@ -732,7 +735,7 @@ function AlignedTimeseries(props) {
             
         })
 
-        //CHart configuration options
+        //Chart configuration options
         let yLabel=null
         let LeftMargin = 0
         if(conf_yaxislabel !== "" & conf_yaxislabel!== null) {
