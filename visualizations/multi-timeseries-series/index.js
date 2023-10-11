@@ -88,44 +88,44 @@ function AlignedTimeseries(props) {
         grp_display
     } = props;
 
+        // !! The creator returns nulls and empty string, the editor undefined!
         //grp_data
-        const conf_accountId = grp_data.conf_accountId;
-        const conf_query = grp_data.conf_query
-        const conf_timeseries = grp_data.conf_timeseries
+        const conf_accountId = !grp_data ? null : grp_data.conf_accountId == undefined ? null : grp_data.conf_accountId ;
+        const conf_query = !grp_data ? null : grp_data.conf_query  == undefined ? null :grp_data.conf_query;
+        const conf_timeseries = !grp_data ? null : grp_data.conf_timeseries  == undefined ? null : grp_data.conf_timeseries;
 
         //grp_window
-        const conf_startunixtime = grp_window.conf_startunixtime;
-        const conf_endunixtime = grp_window.conf_endunixtime;
-        const conf_duration = grp_window.conf_duration;
-        const conf_startfromnow = grp_window.conf_startfromnow;
-        const conf_endfromnow = grp_window.conf_endfromnow;
-        const conf_todaystarttime = grp_window.conf_todaystarttime;
-        const conf_todayendtime = grp_window.conf_todayendtime;
-
+        const conf_startunixtime = !grp_window ? null : grp_window.conf_startunixtime  == undefined ? null :grp_window.conf_startunixtime ;
+        const conf_endunixtime = !grp_window ? null :grp_window.conf_endunixtime  == undefined ? null :grp_window.conf_endunixtime;
+        const conf_duration = !grp_window ? null :grp_window.conf_duration  == undefined ? null :grp_window.conf_duration;
+        const conf_startfromnow = !grp_window ? null :grp_window.conf_startfromnow  == undefined ? null :grp_window.conf_startfromnow;
+        const conf_endfromnow = !grp_window ? null :grp_window.conf_endfromnow  == undefined ? null :grp_window.conf_endfromnow;
+        const conf_todaystarttime = !grp_window ? null :grp_window.conf_todaystarttime  == undefined ? null :grp_window.conf_todaystarttime;
+        const conf_todayendtime = !grp_window ? null :grp_window.conf_todayendtime == undefined ? null : grp_window.conf_todayendtime;
 
         //grp_history
-        const conf_compare = grp_history.conf_compare
-        const conf_comparestepsize = grp_history.conf_comparestepsize
+        const conf_compare = !grp_history ? null : grp_history.conf_compare == undefined ? null : grp_history.conf_compare;
+        const conf_comparestepsize = !grp_history ? null : grp_history.conf_comparestepsize == undefined ? null : grp_history.conf_comparestepsize;
         
         //grp_layers
-        const conf_hideoriginaldata = grp_layers.conf_hideoriginaldata;
-        const conf_average = grp_layers.conf_average;
-        const conf_minmaxareabol = grp_layers.conf_minmaxareabol;
-        const conf_trimmedareabol = grp_layers.conf_trimmedareabol;
-        const conf_trimpercent = grp_layers.conf_trimpercent;
-        const conf_clippedareabol = grp_layers.conf_clippedareabol;
-        const conf_clipsize = grp_layers.conf_clipsize;
+        const conf_hideoriginaldata = !grp_layers ? null : grp_layers.conf_hideoriginaldata == undefined ? null : grp_layers.conf_hideoriginaldata;
+        const conf_average = !grp_layers ? null : grp_layers.conf_average == undefined ? null : grp_layers.conf_average;
+        const conf_minmaxareabol = !grp_layers ? null : grp_layers.conf_minmaxareabol == undefined ? null : grp_layers.conf_minmaxareabol;
+        const conf_trimmedareabol = !grp_layers ? null : grp_layers.conf_trimmedareabol == undefined ? null : grp_layers.conf_trimmedareabol;
+        const conf_trimpercent = !grp_layers ? null : grp_layers.conf_trimpercent == undefined ? null : grp_layers.conf_trimpercent;
+        const conf_clippedareabol = !grp_layers ? null : grp_layers.conf_clippedareabol == undefined ? null : grp_layers.conf_clippedareabol;
+        const conf_clipsize = !grp_layers ? null : grp_layers.conf_clipsize == undefined ? null : grp_layers.conf_clipsize;
 
         //grp_display
-        const conf_alignment = grp_display.conf_alignment;
-        const conf_refreshrate = grp_display.conf_refreshrate;
-        const conf_yaxislabel = grp_display.conf_yaxislabel;
-        const conf_yaxismax = grp_display.conf_yaxismax;
-        const conf_yaxismin = grp_display.conf_yaxismin;
-        const conf_showdots = grp_display.conf_showdots;
-        const conf_colortheme = grp_display.conf_colortheme;
-        const conf_datetimestringformat_xaxis = grp_display.conf_datetimestringformat_xaxis;
-        const conf_datetimestringformat_tooltip = grp_display.conf_datetimestringformat_tooltip;
+        const conf_alignment = !grp_display ? null :  grp_display.conf_alignment == undefined ? null : grp_display.conf_alignment;
+        const conf_refreshrate = !grp_display ? null : grp_display.conf_refreshrate == undefined ? null : grp_display.conf_refreshrate;
+        const conf_yaxislabel = !grp_display ? null : grp_display.conf_yaxislabel == undefined ? null : grp_display.conf_yaxislabel;
+        const conf_yaxismax = !grp_display ? null : grp_display.conf_yaxismax == undefined ? null : grp_display.conf_yaxismax;
+        const conf_yaxismin = !grp_display ? null : grp_display.conf_yaxismin == undefined ? null : grp_display.conf_yaxismin;
+        const conf_showdots = !grp_display ? null : grp_display.conf_showdots == undefined ? null : grp_display.conf_showdots;
+        const conf_colortheme = !grp_display ? null : grp_display.conf_colortheme == undefined ? null : grp_display.conf_colortheme;
+        const conf_datetimestringformat_xaxis = !grp_display ? null : grp_display.conf_datetimestringformat_xaxis == undefined ? null : grp_display.conf_datetimestringformat_xaxis;
+        const conf_datetimestringformat_tooltip = !grp_display ? null : grp_display.conf_datetimestringformat_tooltip == undefined ? null : grp_display.conf_datetimestringformat_tooltip;
 
 
     function convertTimestampToDate(timestamp,objname,windowsize) {
@@ -335,7 +335,7 @@ function AlignedTimeseries(props) {
     if(conf_compare!=="" && conf_compare!=null) {
         fadeColorSize=parseInt(conf_compare);
     }
-    console.log("fadeColorSize",fadeColorSize)
+    
     const colorThemes={
 
         "pale": {
@@ -470,7 +470,6 @@ function AlignedTimeseries(props) {
 
     //Freetext hour
     if(conf_todaystarttime!=="" && conf_todaystarttime!==null) {
-        console.log("conf_todaystarttime",conf_todaystarttime)
         startunixtime=moment(conf_todaystarttime, "hhmm").valueOf()
     }
     if(conf_todayendtime!=="" && conf_todayendtime!==null) {
@@ -812,7 +811,7 @@ function AlignedTimeseries(props) {
           <Legend />
           {linechartdata.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={5} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>))}   
           {arechartdata.map((s) => (<Area type="monotone" fill={s.metadata.color} dataKey="y" data={s.data}  name={s.metadata.name} strokeWidth={0} key={s.metadata.name}/>))}
-          {vizchartData.map((s) => {console.log("col",s.metadata.color);return <Line type="linear" dot={showDots} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>})}
+          {vizchartData.map((s) => {return <Line type="linear" dot={showDots} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>})}
           {refPoint}
         </ComposedChart>
         <Grid>
