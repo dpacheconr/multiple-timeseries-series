@@ -687,7 +687,7 @@ function AlignedTimeseries(props) {
             }
         })
 
-        // update tooltip with human readable datetime
+        // update tooltip with human readable times
         unixtodatetime(queryResults)
 
         let vizchartData=[]
