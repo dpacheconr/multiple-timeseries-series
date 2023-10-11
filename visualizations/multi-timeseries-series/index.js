@@ -81,36 +81,52 @@ function parse_data(array) {
 
 function AlignedTimeseries(props) {
     const {
-        conf_accountId,
-        conf_query,
-        conf_compare,
-        conf_timeseries,
-        conf_hideoriginaldata,
-        conf_average,
-        conf_minmaxareabol,
-        conf_trimmedareabol,
-        conf_trimpercent,
-        conf_clippedareabol,
-        conf_clipsize,
-        conf_alignment,
-        conf_startunixtime,
-        conf_endunixtime,
-        conf_duration,
-        conf_refreshrate,
-        conf_comparestepsize,
-        conf_startfromnow,
-        conf_endfromnow,
-        conf_todaystarttime,
-        conf_todayendtime,
-        conf_yaxislabel,
-        conf_yaxismax,
-        conf_yaxismin,
-        conf_showdots,
-        conf_colortheme,
-        conf_datetimestringformat_xaxis,
-        conf_datetimestringformat_tooltip
-    
+        grp_data,
+        grp_window,
+        grp_history,
+        grp_layers,
+        grp_display
     } = props;
+
+        //grp_data
+        const conf_accountId = grp_data.conf_accountId;
+        const conf_query = grp_data.conf_query
+        const conf_timeseries = grp_data.conf_timeseries
+
+        //grp_window
+        const conf_startunixtime = grp_window.conf_startunixtime;
+        const conf_endunixtime = grp_window.conf_endunixtime;
+        const conf_duration = grp_window.conf_duration;
+        const conf_startfromnow = grp_window.conf_startfromnow;
+        const conf_endfromnow = grp_window.conf_endfromnow;
+        const conf_todaystarttime = grp_window.conf_todaystarttime;
+        const conf_todayendtime = grp_window.conf_todayendtime;
+
+
+        //grp_history
+        const conf_compare = grp_history.conf_compare
+        const conf_comparestepsize = grp_history.conf_comparestepsize
+        
+        //grp_layers
+        const conf_hideoriginaldata = grp_layers.conf_hideoriginaldata;
+        const conf_average = grp_layers.conf_average;
+        const conf_minmaxareabol = grp_layers.conf_minmaxareabol;
+        const conf_trimmedareabol = grp_layers.conf_trimmedareabol;
+        const conf_trimpercent = grp_layers.conf_trimpercent;
+        const conf_clippedareabol = grp_layers.conf_clippedareabol;
+        const conf_clipsize = grp_layers.conf_clipsize;
+
+        //grp_display
+        const conf_alignment = grp_display.conf_alignment;
+        const conf_refreshrate = grp_display.conf_refreshrate;
+        const conf_yaxislabel = grp_display.conf_yaxislabel;
+        const conf_yaxismax = grp_display.conf_yaxismax;
+        const conf_yaxismin = grp_display.conf_yaxismin;
+        const conf_showdots = grp_display.conf_showdots;
+        const conf_colortheme = grp_display.conf_colortheme;
+        const conf_datetimestringformat_xaxis = grp_display.conf_datetimestringformat_xaxis;
+        const conf_datetimestringformat_tooltip = grp_display.conf_datetimestringformat_tooltip;
+
 
     function convertTimestampToDate(timestamp,objname,windowsize) {
         var output
@@ -308,6 +324,12 @@ function AlignedTimeseries(props) {
         data.push({"data":[{"data":maxset, "metadata":{"viz":"main","name": "max","id":"DDB4E3844C923B3F794EC52642E22CBE9FC8D8D31", "color": getColor(3)}}],loading: false, error: null})
        
     }
+
+    if(conf_accountId == null || conf_accountId== "" || conf_query == null || conf_query == "") {
+        return <div className="EmptyState">
+         <div className="loader">Please configure a data source query.</div>
+        </div>
+    }
     
     let fadeColorSize=20
     if(conf_compare!=="" && conf_compare!=null) {
@@ -407,7 +429,7 @@ function AlignedTimeseries(props) {
     let startunixtime = null; //in ms
     let endunixtime = null; //in ms!
     let parsedDuration=null;
-    let historicalStepSize=0;
+    let historicalStepSize=1000 * 60 * 60 * 24 * 7;
     let startFromNow=null;
     let endFromNow=null;
 
