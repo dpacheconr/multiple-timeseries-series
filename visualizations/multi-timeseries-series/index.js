@@ -19,13 +19,7 @@ let avgbol = false
 const DefaultWindowSize = 60 * 60 * 24  * 1000;
 
 
- function convertTimestampToDate(timestamp) {
-    let value = timestamp
-    let dateObj = new Date(value);
-    let utcString = dateObj.toUTCString();
-    let time = utcString.slice(5,-4);
-    return time
-  }
+
 
 
 
@@ -58,81 +52,9 @@ function getMinMax(data) {
     return [minValue,maxValue]
 }
 
-function unixtodatetime(data) {
-    let keys = ["begin_time","end_time"]
-    data.map((s) => {
-        for (let item in s){
-            if (item == "data"){
-                for (let subitem in s[item]) {
-                    for (let i in s[item][subitem].data){
-                        for (let j in s[item][subitem].data[i]){
-                            if (keys.includes(j)){
-                                let value = s[item][subitem].data[i][j]
-                                let dateObj = new Date(value);
-                                let utcString = dateObj.toUTCString();
-                                let time = utcString.slice(5,-4);
-                                s[item][subitem].data[i][j] = time
-                            }
-                        }
 
-                    }
-                }
-                    
-                }
-            }
-
-    })
-}
  
-function exportToCsv (querydataImput){
-    var querydata = _.cloneDeep(querydataImput);
-    let keys = ["begin_time","end_time","x","y"]
-    let data=querydata.slice(1,querydata.length)
 
-    var c_newdata = _.cloneDeep(querydata[0]);
-
-    data.forEach(array => {
-        array.data.forEach((dict,index) => {
-                for (let key in dict){
-                    if (!keys.includes(key)){
-                        c_newdata.data[index][key] = dict[key]
-                        // also delete unwanted keys in this loop
-                        delete c_newdata.data[index]["x"]
-                        delete c_newdata.data[index]["y"]
-                }
-        }
-        })
-    })
-
-    let sorted = []
-    for(var key in c_newdata.data[0]) {
-        sorted[0] = "begin_time"
-        sorted[1] = "end_time"
-        if (key != "begin_time" && key != "end_time"){
-            sorted[sorted.length] = key
-        }
-    }
-
-    let output = []
-
-    c_newdata.data.forEach(array => {
-        var tempDict = {};
-        for(var i = 0; i < sorted.length; i++) {   
-            if (i <=1) {
-                let c_key = String(sorted[i])
-                let item_val = convertTimestampToDate(array[sorted[i]])
-                tempDict[c_key]= item_val
-            } else {
-            let c_key = String(sorted[i])
-            let item_val = array[sorted[i]]
-            tempDict[c_key]=item_val
-            }
-        }
-        output.push(tempDict)
-    }
-    )
-    return output
-}
 
 function build_json(z,i,array,value) {
     let datatopass={}
@@ -184,9 +106,97 @@ function AlignedTimeseries(props) {
         conf_yaxismax,
         conf_yaxismin,
         conf_showdots,
-        conf_colortheme
+        conf_colortheme,
+        conf_datetimestringformat_xaxis,
+        conf_datetimestringformat_tooltip
     
     } = props;
+
+    function unixtodatetime(dataImput) {
+        console.log("data imputed",dataImput)
+        let keys = ["x","begin_time","end_time"]
+        var data = _.cloneDeep(dataImput);
+        data.map((s) => {
+            for (let item in s){
+                if (item == "data"){
+                    for (let subitem in s[item]) {
+                        for (let i in s[item][subitem].data){
+                            for (let j in s[item][subitem].data[i]){
+                                if (keys.includes(j)){
+                                    let value = s[item][subitem].data[i][j]
+                                    let time = moment(value).format(conf_datetimestringformat_tooltip)
+                                    s[item][subitem].data[i][j] = time
+
+                                }
+                            }
+    
+                        }
+                    }
+                        
+                    }
+                }
+        })
+        return data
+    }
+
+    function convertTimestampToDate(timestamp,objname) {
+        var dayWrapper
+        if (objname == "tooltip"){
+            dayWrapper = moment(timestamp).format(conf_datetimestringformat_tooltip)
+        } else {
+            dayWrapper = moment(timestamp).format(conf_datetimestringformat_xaxis)
+        }
+        return dayWrapper
+    }
+    function exportToCsv (querydataImput){
+        var querydata = _.cloneDeep(querydataImput);
+        let keys = ["begin_time","end_time","x","y"]
+        let data=querydata.slice(1,querydata.length)
+    
+        var c_newdata = _.cloneDeep(querydata[0]);
+    
+        data.forEach(array => {
+            array.data.forEach((dict,index) => {
+                    for (let key in dict){
+                        if (!keys.includes(key)){
+                            c_newdata.data[index][key] = dict[key]
+                            // also delete unwanted keys in this loop
+                            delete c_newdata.data[index]["x"]
+                            delete c_newdata.data[index]["y"]
+                    }
+            }
+            })
+        })
+    
+        let sorted = []
+        for(var key in c_newdata.data[0]) {
+            sorted[0] = "begin_time"
+            sorted[1] = "end_time"
+            if (key != "begin_time" && key != "end_time"){
+                sorted[sorted.length] = key
+            }
+        }
+    
+        let output = []
+    
+        c_newdata.data.forEach(array => {
+            var tempDict = {};
+            for(var i = 0; i < sorted.length; i++) {   
+                if (i <=1) {
+                    let c_key = String(sorted[i])
+                    let item_val = convertTimestampToDate(array[sorted[i]])
+                    tempDict[c_key]= item_val
+                } else {
+                let c_key = String(sorted[i])
+                let item_val = array[sorted[i]]
+                tempDict[c_key]=item_val
+                }
+            }
+            output.push(tempDict)
+        }
+        )
+        return output
+    }
 
     function calculatedata(data) {
    
@@ -687,9 +697,6 @@ function AlignedTimeseries(props) {
             }
         })
 
-        // update tooltip with human readable times
-        unixtodatetime(queryResults)
-
         let vizchartData=[]
         let exportchartData=[]
         let linechartdata = []
@@ -786,7 +793,7 @@ function AlignedTimeseries(props) {
                     fontFamily: '"Inter", "Segoe UI", "Tahoma", sans-serif'
                 }}
             />
-          <Tooltip />
+          <Tooltip labelFormatter={(value)=>{return convertTimestampToDate(value,'tooltip');}} />
           <Legend />
           {linechartdata.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={5} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>))}   
           {arechartdata.map((s) => (<Area type="monotone" fill={s.metadata.color} dataKey="y" data={s.data}  name={s.metadata.name} strokeWidth={0} key={s.metadata.name}/>))}
@@ -795,8 +802,7 @@ function AlignedTimeseries(props) {
         </ComposedChart>
         <Grid>
             <GridItem columnSpan={12}>
-            {outTable}
-            </GridItem>
+            {outTable}            </GridItem>
         </Grid>
           </div>
         )}
