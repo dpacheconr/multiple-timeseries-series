@@ -5,7 +5,6 @@ import {NrqlQuery, Spinner,Grid,GridItem,AutoSizer,PlatformStateContext} from 'n
 import { Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ComposedChart,Area,ReferenceDot} from 'recharts';
 import { CSVLink } from "react-csv"
 import moment from 'moment';
-import { array } from 'prop-types';
 import chroma from "chroma-js";
 
 // Global variables
@@ -17,11 +16,6 @@ let clipSize=2
 let avgbol = false
 
 const DefaultWindowSize = 60 * 60 * 24  * 1000;
-
-
-
-
-
 
 function avgfunction (array) {
     let sum = 0;
@@ -511,7 +505,7 @@ function AlignedTimeseries(props) {
         };
         overrideTimePicker=true;
     } else {
-        // //hard coded defaults
+        // hard coded defaults
         // const duration = 60*60*24*1*1000
         // const enddate =  Date.now() - duration
         // const startdate = enddate - duration
@@ -522,15 +516,15 @@ function AlignedTimeseries(props) {
         //     duration: null, 
         //     end_time: enddate
         // };
-
     }
 
 
-    // Often provided by the PlatformState provider, but not when in first creation mode
-    const ctx = {tvMode: false, accountId: c_accountid, filters: undefined, timeRange: timeRange}
-    const cplatformstatecontext = ctx
-    // useContext(PlatformStateContext);
- 
+    // used during testing
+    // const ctx = {tvMode: false, accountId: c_accountid, filters: undefined, timeRange: timeRange}
+    // const cplatformstatecontext = ctx
+
+    // Use during production
+    const cplatformstatecontext = useContext(PlatformStateContext);
 
     async function  dataLoader() {
         console.log("Loading data")
