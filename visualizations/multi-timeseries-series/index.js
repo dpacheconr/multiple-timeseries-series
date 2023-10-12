@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useContext} from 'react';
 import {NrqlQuery, Spinner,Grid,GridItem,AutoSizer,PlatformStateContext} from 'nr1';
-import { Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ComposedChart,Area,ReferenceDot} from 'recharts';
+import { Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ComposedChart,Area,ReferenceDot, ReferenceArea, ReferenceLine} from 'recharts';
 import { CSVLink } from "react-csv"
 import moment from 'moment';
 import chroma from "chroma-js";
@@ -79,7 +79,8 @@ function AlignedTimeseries(props) {
         grp_window,
         grp_history,
         grp_layers,
-        grp_display
+        grp_display,
+        conf_referenceareas
     } = props;
 
         // !! The creator returns nulls and empty string, the editor undefined!
@@ -120,7 +121,10 @@ function AlignedTimeseries(props) {
         const conf_colortheme = !grp_display ? null : grp_display.conf_colortheme == undefined ? null : grp_display.conf_colortheme;
         const conf_datetimestringformat_xaxis = !grp_display ? null : grp_display.conf_datetimestringformat_xaxis == undefined ? null : grp_display.conf_datetimestringformat_xaxis;
         const conf_datetimestringformat_tooltip = !grp_display ? null : grp_display.conf_datetimestringformat_tooltip == undefined ? null : grp_display.conf_datetimestringformat_tooltip;
+        const conf_gridbol = !grp_display ? null : grp_display.conf_gridbol == undefined ? false : grp_display.conf_gridbol;
+        
 
+ 
 
     function convertTimestampToDate(timestamp,objname,windowsize) {
         var output
@@ -768,6 +772,39 @@ function AlignedTimeseries(props) {
         }
 
 
+        //Reference areas and lines
+        let referenceAreas=[], referenceLines=[]
+        if(conf_referenceareas && conf_referenceareas.length > 0) {
+            conf_referenceareas.forEach((ref)=>{
+                if(ref.conf_refType !== null && ((ref.conf_refY1!==null & ref.conf_refY1!=="") || (ref.conf_refY2!==null & ref.conf_refY2!=="")) ) {
+
+                    let y1=ref.conf_refY1 ===  null || ref.conf_refY1==="" ? null : parseInt(ref.conf_refY1);
+                    let y2=ref.conf_refY2 ===  null || ref.conf_refY2==="" ? null : parseInt(ref.conf_refY2);
+                    let color=ref.conf_refColor ===  null || ref.conf_refColor==="" ? "#33333322" : ref.conf_refColor;
+
+                    let labelColor="#666666";
+                    try {labelColor=chroma(color).alpha(1).darken(2).hex();} catch {}
+                    
+                    let label=ref.conf_refName === null || ref.conf_refName ==="" ? null : {fill: labelColor, value: ref.conf_refName, position: 'insideTopLeft'}
+                    if(ref.conf_refType=='area') { 
+                        referenceAreas.push(<ReferenceArea y1={y1} y2={y2}  fillOpacity={1} fill={color} label={label} />)
+                    }
+                    if(ref.conf_refType=='line') {
+                        referenceLines.push(<ReferenceLine y={y1} label={label} stroke={color} />)
+                    }
+
+                }
+
+            })
+        }
+
+        //grid
+        let chartGrid=null;
+        if(grp_display.conf_gridbol!==null && grp_display.conf_gridbol===true) {
+            chartGrid=<CartesianGrid  strokeDasharray="3 3" /> 
+        }
+
+
         //Line chart options
         let showDots=false;
         if(conf_showdots!=="" && conf_showdots!==null) {
@@ -781,7 +818,7 @@ function AlignedTimeseries(props) {
         return <AutoSizer>
             {({ width, height }) => (<div style={{ height: height, width: width }}>
             <ComposedChart width={width} height={height} margin={{top: 10, right: 50, bottom: 30, left: LeftMargin}}>
-          <CartesianGrid strokeDasharray="3 3" /> 
+          {chartGrid}
           <XAxis tickFormatter={(x)=>{return convertTimestampToDate(x,'xtick',windowsize);}} dataKey="x"  type="category" allowDuplicatedCategory={false} interval="equidistantPreserveStart"  style={{
                     fontSize: '0.8rem',
                     fontFamily: '"Inter", "Segoe UI", "Tahoma", sans-serif'
@@ -800,6 +837,8 @@ function AlignedTimeseries(props) {
             />
           <Tooltip labelFormatter={(value)=>{return convertTimestampToDate(value,'tooltip',windowsize);}} />
           <Legend />
+          {referenceAreas}
+          {referenceLines}
           {linechartdata.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={5} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>))}   
           {arechartdata.map((s) => (<Area type="monotone" fill={s.metadata.color} dataKey="y" data={s.data}  name={s.metadata.name} strokeWidth={0} key={s.metadata.name}/>))}
           {vizchartData.map((s) => {return <Line type="linear" dot={showDots} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>})}
