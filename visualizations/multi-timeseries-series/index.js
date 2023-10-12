@@ -421,15 +421,12 @@ function AlignedTimeseries(props) {
     const [queryResults, setQueryResults] = useState(null);
     const [globalError, setGlobalError] = useState(null);
     const [windowsize, setWindowsize] = useState(null);
-    let timeRange;
     let timeRangeMoment;
     let overrideTimePicker=false;
 
 
 
     //determine time window overrides
-    let startunixtime = null; //in ms
-    let endunixtime = null; //in ms!
     let startMoment = null;
     let endMoment = null;
     let parsedDuration=null;
@@ -464,11 +461,9 @@ function AlignedTimeseries(props) {
 
     // Hard coded window
     if(conf_startunixtime!=="" && conf_startunixtime !== null) {
-        startunixtime = parseInt(conf_startunixtime) * 1000
         startMoment=moment.unix(parseInt(conf_startunixtime) * 1000)
     }
     if(conf_endunixtime!=="" && conf_endunixtime !== null) {
-        endunixtime = parseInt(conf_endunixtime) * 1000
         endMoment=moment.unix(parseInt(conf_endunixtime) * 1000)
     }
 
@@ -481,62 +476,15 @@ function AlignedTimeseries(props) {
     }
 
 
-    //Offset form now window
-    if(startFromNow !== null) {
-        startunixtime =  Date.now() - startFromNow
-    }
-    if(endFromNow !== null) {
-        endunixtime =  Date.now() + endFromNow
-    }
-
     //Freetext hour
     if(conf_todaystarttime!=="" && conf_todaystarttime!==null) {
-        startunixtime=moment(conf_todaystarttime, "hhmm").valueOf();
         startMoment = moment.tz(conf_todaystarttime, "hhmm",conf_timezone);
     }
-
     if(conf_todayendtime!=="" && conf_todayendtime!==null) {
-        endunixtime=moment(conf_todayendtime, "hhmm").valueOf();
         endMoment=moment.tz(conf_todayendtime, "hhmm",conf_timezone);
     }
    
 
-    
-    // //unixtime version
-    // if(startunixtime!==null && endunixtime!==null) {     //start and end time provided
-    //     console.log("Start and end time provided",startunixtime,endunixtime)
-    //     timeRange = {
-    //         begin_time: startunixtime,
-    //         duration: null, 
-    //         end_time: endunixtime
-    //     };
-    //     overrideTimePicker=true;
-    // } else if(startunixtime!==null &&  parsedDuration!==null ) {  // start and duration provided
-    //     console.log("Start and duration provided", startunixtime, parsedDuration)
-    //     timeRange = {
-    //         begin_time: startunixtime,
-    //         duration: null, 
-    //         end_time: startunixtime + parsedDuration
-    //     };
-
-    //     overrideTimePicker=true;
-    // } else if(endunixtime!==null && parsedDuration!==null) { // end and duration provided
-    //     console.log("End and duration provided")
-    //     timeRange = {
-    //         begin_time: endunixtime - parsedDuration,
-    //         duration: null, 
-    //         end_time: endunixtime
-    //     };
-    //     overrideTimePicker=true;
-    // } else if( parsedDuration!==null) { // just duration provided, assume thats a since duration time ago until now
-    //     console.log("Just duration provided")
-    //     timeRange = {
-    //         begin_time: null,
-    //         duration: parsedDuration, 
-    //         end_time: null
-    //     };
-    //     overrideTimePicker=true;
-    // }
 
     //moment version
     if(startMoment && endMoment) {     //start and end time provided
