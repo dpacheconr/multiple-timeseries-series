@@ -514,9 +514,9 @@ function AlignedTimeseries(props) {
     }
 
     // Often provided by the PlatformState provider, but not when in first creation mode
-    const ctx = {tvMode: false, accountId: c_accountid, filters: undefined}
+    // const ctx = {tvMode: false, accountId: c_accountid, filters: undefined}
 
-    const cplatformstatecontext = ctx
+    // const cplatformstatecontext = ctx
     // useContext(PlatformStateContext);
  
 
@@ -818,7 +818,7 @@ function AlignedTimeseries(props) {
           <Tooltip labelFormatter={(value)=>{return convertTimestampToDate(value,'tooltip',windowsizeMoment.asMilliseconds());}} />
           <Legend />
           {linechartdata.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={5} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>))}   
-          {arechartdata.map((s) => (<Area type="monotone" fill={s.metadata.color} dataKey="y" data={s.data}  name={s.metadata.name} strokeWidth={0} key={s.metadata.name}/>))}
+          {arechartdata.map((s) => (<Area type="monotone" fill={s.metadata.color} dataKey="y" legendType='none' data={s.data}  name="" strokeWidth={0} key={s.metadata.name}/>))}
           {vizchartData.map((s) => {return <Line type="linear" dot={showDots} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>})}
           {refPoint}
         </ComposedChart>
