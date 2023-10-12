@@ -4,7 +4,7 @@ import React, { useState, useEffect, useContext} from 'react';
 import {NrqlQuery, Spinner,Grid,GridItem,AutoSizer,PlatformStateContext} from 'nr1';
 import { Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ComposedChart,Area,ReferenceDot} from 'recharts';
 import { CSVLink } from "react-csv"
-import moment from 'moment';
+import moment from 'moment-timezone';
 import { array } from 'prop-types';
 import chroma from "chroma-js";
 
@@ -93,6 +93,7 @@ function AlignedTimeseries(props) {
         const conf_accountId = !grp_data ? null : grp_data.conf_accountId == undefined ? null : grp_data.conf_accountId ;
         const conf_query = !grp_data ? null : grp_data.conf_query  == undefined ? null :grp_data.conf_query;
         const conf_timeseries = !grp_data ? null : grp_data.conf_timeseries  == undefined ? null : grp_data.conf_timeseries;
+        const conf_timezone = !grp_data ? null : grp_data.conf_timezone  == undefined ? null : grp_data.conf_timezone;
 
         //grp_window
         const conf_startunixtime = !grp_window ? null : grp_window.conf_startunixtime  == undefined ? null :grp_window.conf_startunixtime ;
@@ -134,16 +135,16 @@ function AlignedTimeseries(props) {
             let formatter= (conf_datetimestringformat_tooltip === null || conf_datetimestringformat_tooltip==="") ? "YYYY/MM/DD hh:mm:ss" : conf_datetimestringformat_tooltip
             output = moment(timestamp).format(formatter)
         } else {
-            let formatter='yyyy/mm/dd hh:mm'
+            let formatter='YYYY/MM/DD HH:mm'
             if(conf_datetimestringformat_xaxis === null || conf_datetimestringformat_xaxis==="") {
                 //automatic formatting of dates based on window size
                 let winsizesecs=windowsize/1000
                 if(winsizesecs <= moment.duration("PT1H").asSeconds()) {
-                    formatter="hh:mm:ss"
+                    formatter="HH:mm:ss"
                 } else if(winsizesecs <= moment.duration("PT24H").asSeconds()) {
-                    formatter="hh:mm"
+                    formatter="HH:mm"
                 } else if( winsizesecs <= moment.duration("P31D").asSeconds() ){
-                    formatter="YYYY/MM/DD hh:mm"
+                    formatter="YYYY/MM/DD HH:mm"
                 } else {
                     formatter="YYYY/MM/DD hha"
                 }
@@ -421,6 +422,7 @@ function AlignedTimeseries(props) {
     const [globalError, setGlobalError] = useState(null);
     const [windowsize, setWindowsize] = useState(null);
     let timeRange;
+    let timeRangeMoment;
     let overrideTimePicker=false;
 
 
@@ -428,7 +430,10 @@ function AlignedTimeseries(props) {
     //determine time window overrides
     let startunixtime = null; //in ms
     let endunixtime = null; //in ms!
+    let startMoment = null;
+    let endMoment = null;
     let parsedDuration=null;
+    let durationMoment=moment.duration("PT1H"); //default if none supplied
     let historicalStepSize=1000 * 60 * 60 * 24 * 7;
     let startFromNow=null;
     let endFromNow=null;
@@ -438,6 +443,7 @@ function AlignedTimeseries(props) {
     if(conf_duration !=="" && conf_duration !==null) {
         console.log("Parsed duration",moment.duration("P"+conf_duration).asSeconds())
         parsedDuration=moment.duration("P"+conf_duration).asSeconds() * 1000;
+        durationMoment=moment.duration("P"+conf_duration)
     }
     if(conf_comparestepsize !=="" && conf_comparestepsize !==null) {
         console.log("Parsed step size",moment.duration("P"+conf_comparestepsize).asSeconds())
@@ -452,13 +458,28 @@ function AlignedTimeseries(props) {
         endFromNow=moment.duration("P"+conf_endfromnow).asSeconds() * 1000;
     }
 
+
+    //moment stuff----------
+
+
     // Hard coded window
     if(conf_startunixtime!=="" && conf_startunixtime !== null) {
         startunixtime = parseInt(conf_startunixtime) * 1000
+        startMoment=moment.unix(parseInt(conf_startunixtime) * 1000)
     }
     if(conf_endunixtime!=="" && conf_endunixtime !== null) {
         endunixtime = parseInt(conf_endunixtime) * 1000
+        endMoment=moment.unix(parseInt(conf_endunixtime) * 1000)
     }
+
+    //Offset form now window
+    if(conf_startfromnow !=="" && conf_startfromnow !==null) {
+        startMoment=moment.tz(conf_timezone).subtract(moment.duration("P"+conf_startfromnow))
+    }
+    if(conf_endfromnow !=="" && conf_endfromnow !==null) {
+        endMoment=moment.tz(conf_timezone).add(moment.duration("P"+conf_endfromnow))
+    }
+
 
     //Offset form now window
     if(startFromNow !== null) {
@@ -470,64 +491,93 @@ function AlignedTimeseries(props) {
 
     //Freetext hour
     if(conf_todaystarttime!=="" && conf_todaystarttime!==null) {
-        startunixtime=moment(conf_todaystarttime, "hhmm").valueOf()
+        startunixtime=moment(conf_todaystarttime, "hhmm").valueOf();
+        startMoment = moment.tz(conf_todaystarttime, "hhmm",conf_timezone);
     }
+
     if(conf_todayendtime!=="" && conf_todayendtime!==null) {
-        endunixtime=moment(conf_todayendtime, "hhmm").valueOf()
+        endunixtime=moment(conf_todayendtime, "hhmm").valueOf();
+        endMoment=moment.tz(conf_todayendtime, "hhmm",conf_timezone);
     }
+   
 
     
-    if(startunixtime!==null && endunixtime!==null) {     //start and end time provided
-        console.log("Start and end time provided",startunixtime,endunixtime)
-        timeRange = {
-            begin_time: startunixtime,
-            duration: null, 
-            end_time: endunixtime
-        };
-        overrideTimePicker=true;
-    } else if(startunixtime!==null &&  parsedDuration!==null ) {  // start and duration provided
-        console.log("Start and duration provided", startunixtime, parsedDuration)
-        timeRange = {
-            begin_time: startunixtime,
-            duration: null, 
-            end_time: startunixtime + parsedDuration
-        };
+    // //unixtime version
+    // if(startunixtime!==null && endunixtime!==null) {     //start and end time provided
+    //     console.log("Start and end time provided",startunixtime,endunixtime)
+    //     timeRange = {
+    //         begin_time: startunixtime,
+    //         duration: null, 
+    //         end_time: endunixtime
+    //     };
+    //     overrideTimePicker=true;
+    // } else if(startunixtime!==null &&  parsedDuration!==null ) {  // start and duration provided
+    //     console.log("Start and duration provided", startunixtime, parsedDuration)
+    //     timeRange = {
+    //         begin_time: startunixtime,
+    //         duration: null, 
+    //         end_time: startunixtime + parsedDuration
+    //     };
 
-        overrideTimePicker=true;
-    } else if(endunixtime!==null && parsedDuration!==null) { // end and duration provided
-        console.log("End and duration provided")
-        timeRange = {
-            begin_time: endunixtime - parsedDuration,
+    //     overrideTimePicker=true;
+    // } else if(endunixtime!==null && parsedDuration!==null) { // end and duration provided
+    //     console.log("End and duration provided")
+    //     timeRange = {
+    //         begin_time: endunixtime - parsedDuration,
+    //         duration: null, 
+    //         end_time: endunixtime
+    //     };
+    //     overrideTimePicker=true;
+    // } else if( parsedDuration!==null) { // just duration provided, assume thats a since duration time ago until now
+    //     console.log("Just duration provided")
+    //     timeRange = {
+    //         begin_time: null,
+    //         duration: parsedDuration, 
+    //         end_time: null
+    //     };
+    //     overrideTimePicker=true;
+    // }
+
+    //moment version
+    if(startMoment && endMoment) {     //start and end time provided
+        console.log("Start and end time provided",startMoment.format(),endMoment.format())
+        timeRangeMoment = {
+            begin_time: startMoment.clone(),
             duration: null, 
-            end_time: endunixtime
+            end_time: endMoment.clone()
         };
         overrideTimePicker=true;
-    } else if( parsedDuration!==null) { // just duration provided, assume thats a since duration time ago until now
-        console.log("Just duration provided")
-        timeRange = {
+    } else if(startMoment &&  durationMoment ) {  // start and duration provided
+        console.log("Start and duration provided", startMoment.format(), durationMoment.valueOf())
+        timeRangeMoment = {
+            begin_time: startMoment.clone(),
+            duration: null, 
+            end_time: startMoment.clone().add(durationMoment)
+        };
+        overrideTimePicker=true;
+    } else if(endMoment && durationMoment) { // end and duration provided
+        console.log("End and duration provided", endMoment.format(),endMoment.format("x"), durationMoment.valueOf())
+        timeRangeMoment = {
+            begin_time: endMoment.clone().subtract(durationMoment),
+            duration: null, 
+            end_time: endMoment.clone()
+        };
+        overrideTimePicker=true;
+    } else if( durationMoment) { // just duration provided, assume thats a since duration time ago until now
+        console.log("Just duration provided", durationMoment.valueOf())
+        timeRangeMoment = {
             begin_time: null,
-            duration: parsedDuration, 
+            duration: durationMoment.clone(), 
             end_time: null
         };
         overrideTimePicker=true;
     } else {
-        // //hard coded defaults
-        // const duration = 60*60*24*1*1000
-        // const enddate =  Date.now() - duration
-        // const startdate = enddate - duration
-    
-        // // // Often provided by the PlatformState provider
-        // timeRange = {
-        //     begin_time: startdate,
-        //     duration: null, 
-        //     end_time: enddate
-        // };
-
+        console.log("Shouldnt be here")
     }
 
-
     // Often provided by the PlatformState provider, but not when in first creation mode
-    const ctx = {tvMode: false, accountId: c_accountid, filters: undefined, timeRange: timeRange}
+    const ctx = {tvMode: false, accountId: c_accountid, filters: undefined, timeRange: timeRangeMoment }
+
     const cplatformstatecontext = ctx
     // useContext(PlatformStateContext);
  
@@ -548,7 +598,11 @@ function AlignedTimeseries(props) {
         }
     
         if(overrideTimePicker) { // if a fixed window has been provided then we use that instead of any values delivered via the time picker.
-            cplatformstatecontext.timeRange = timeRange
+            //tempoary unix removal test
+            cplatformstatecontext.timeRange={}
+            cplatformstatecontext.timeRange.begin_time=timeRangeMoment.begin_time == null ? timeRangeMoment.begin_time : timeRangeMoment.begin_time.format("x") ;
+            cplatformstatecontext.timeRange.end_time=timeRangeMoment.end_time == null ? timeRangeMoment.end_time : timeRangeMoment.end_time.format("x") ;
+            cplatformstatecontext.timeRange.duration=timeRangeMoment.duration == null ? null : timeRangeMoment.duration.asSeconds() * 1000
         }
     
     
