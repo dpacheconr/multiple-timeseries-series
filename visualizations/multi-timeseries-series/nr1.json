@@ -246,6 +246,54 @@
             ]
         },
         {
+            "name": "conf_referenceareas",
+            "title": "Reference Areas",
+            "type": "collection",
+            "items": [
+                {
+                    "name": "conf_refName",
+                    "title": "Name",
+                    "description": "The name of the reference area",
+                    "type": "string"
+                },
+                {
+                    "name": "conf_refType",
+                    "title": "Type",
+                    "description": "Area or line",
+                    "type": "enum",
+                    "items": [
+                        {
+                            "title": "Area",
+                            "value": "area"
+                        },
+                        {
+                            "title": "Line",
+                            "value": "line"
+                        }
+                    ]
+                },
+                {
+                    "name": "conf_refY1",
+                    "title": "Lower Y value (blank for min)",
+                    "description": "The lower Y value to render areas or lines",
+                    "type": "number"
+                },
+                {
+                    "name": "conf_refY2",
+                    "title": "Upper Y value (blank for max, not used for lines)",
+                    "description": "The upper Y value to areas",
+                    "type": "number"
+                },
+                {
+                    "name": "conf_refColor",
+                    "title": "Color (css)",
+                    "description": "The color of the area, in CSS. Opacity is supported. e.g. 'red', '#FC65D688'",
+                    "type": "number"
+                }
+            ]
+        }
+        ,
+        {
             "name": "grp_display",
             "title": "Display options",
             "type": "namespace",
@@ -291,6 +339,12 @@
                     "title": "Y axis min",
                     "description": "Y Axis min value",
                     "type": "string"
+                },
+                {
+                    "name": "conf_gridbol",
+                    "title": "Display grid",
+                    "description": "Display a grid",
+                    "type": "boolean"
                 },
                 {
                     "name": "conf_colortheme",
