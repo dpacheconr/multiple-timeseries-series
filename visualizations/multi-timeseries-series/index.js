@@ -4,8 +4,10 @@ import React, { useState, useEffect, useContext} from 'react';
 import {NrqlQuery, Spinner,Grid,GridItem,AutoSizer,PlatformStateContext} from 'nr1';
 import { Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ComposedChart,Area,ReferenceDot} from 'recharts';
 import { CSVLink } from "react-csv"
+
 import moment from 'moment-timezone';
 import { array } from 'prop-types';
+
 import chroma from "chroma-js";
 
 // Global variables
@@ -518,9 +520,11 @@ function AlignedTimeseries(props) {
     // useContext(PlatformStateContext);
  
 
-    async function  dataLoader() {
-        console.log("Loading data")
 
+    // Use during production
+    const cplatformstatecontext = useContext(PlatformStateContext);
+
+    async function  dataLoader() {
         c_accountid = conf_accountId
         let mainquery = conf_query
         avgbol = conf_average
@@ -593,7 +597,6 @@ function AlignedTimeseries(props) {
         
     
         try {
-            console.log("Loading data")
             data = await Promise.all(promises)
             if (data[0].error != null){
                console.log(data[0].error.message)
