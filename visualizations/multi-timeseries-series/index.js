@@ -16,11 +16,7 @@ let trimpercent = 10
 let clipSize=2
 let avgbol = false
 
-const DefaultWindowSize = 60 * 60 * 24  * 1000;
-
-
-
-
+const DefaultWindowSizeMoment=moment.duration("PT1H")
 
 
 function avgfunction (array) {
@@ -93,7 +89,7 @@ function AlignedTimeseries(props) {
         const conf_accountId = !grp_data ? null : grp_data.conf_accountId == undefined ? null : grp_data.conf_accountId ;
         const conf_query = !grp_data ? null : grp_data.conf_query  == undefined ? null :grp_data.conf_query;
         const conf_timeseries = !grp_data ? null : grp_data.conf_timeseries  == undefined ? null : grp_data.conf_timeseries;
-        const conf_timezone = !grp_data ? null : grp_data.conf_timezone  == undefined ? null : grp_data.conf_timezone;
+        const conf_timezone = !grp_data ? null : grp_data.conf_timezone  == undefined ? "UTC" : grp_data.conf_timezone;
 
         //grp_window
         const conf_startunixtime = !grp_window ? null : grp_window.conf_startunixtime  == undefined ? null :grp_window.conf_startunixtime ;
@@ -133,7 +129,7 @@ function AlignedTimeseries(props) {
         var output
         if (objname == "tooltip"){
             let formatter= (conf_datetimestringformat_tooltip === null || conf_datetimestringformat_tooltip==="") ? "YYYY/MM/DD hh:mm:ss" : conf_datetimestringformat_tooltip
-            output = moment(timestamp).format(formatter)
+            output = moment.tz(timestamp,conf_timezone).format(formatter)
         } else {
             let formatter='YYYY/MM/DD HH:mm'
             if(conf_datetimestringformat_xaxis === null || conf_datetimestringformat_xaxis==="") {
@@ -151,7 +147,7 @@ function AlignedTimeseries(props) {
             } else {
                 formatter=conf_datetimestringformat_xaxis
             }
-            output = moment(timestamp).format(formatter);
+            output = moment.tz(timestamp,conf_timezone).format(formatter);
         }
         return output
     }
@@ -420,7 +416,8 @@ function AlignedTimeseries(props) {
 
     const [queryResults, setQueryResults] = useState(null);
     const [globalError, setGlobalError] = useState(null);
-    const [windowsize, setWindowsize] = useState(null);
+    const [windowsizeMoment, setWindowsizeMoment] = useState(DefaultWindowSizeMoment.clone());
+    
     let timeRangeMoment;
     let overrideTimePicker=false;
 
@@ -429,11 +426,9 @@ function AlignedTimeseries(props) {
     //determine time window overrides
     let startMoment = null;
     let endMoment = null;
-    let parsedDuration=null;
     let durationMoment=moment.duration("PT1H"); //default if none supplied
-    let historicalStepSize=1000 * 60 * 60 * 24 * 7;
-    let startFromNow=null;
-    let endFromNow=null;
+    let historicalStepSizeMoment=moment.duration("P7D");
+
 
 
     //parsing period data
@@ -444,15 +439,8 @@ function AlignedTimeseries(props) {
     }
     if(conf_comparestepsize !=="" && conf_comparestepsize !==null) {
         console.log("Parsed step size",moment.duration("P"+conf_comparestepsize).asSeconds())
-        historicalStepSize=moment.duration("P"+conf_comparestepsize).asSeconds() * 1000;
-    }
-    if(conf_startfromnow !=="" && conf_startfromnow !==null) {
-        console.log("Parsed start from now",moment.duration("P"+conf_startfromnow).asSeconds())
-        startFromNow=moment.duration("P"+conf_startfromnow).asSeconds() * 1000;
-    }
-    if(conf_endfromnow !=="" && conf_endfromnow !==null) {
-        console.log("Parsed end from now",moment.duration("P"+conf_endfromnow).asSeconds())
-        endFromNow=moment.duration("P"+conf_endfromnow).asSeconds() * 1000;
+        historicalStepSize=moment.duration("P"+conf_comparestepsize).asSeconds() * 1000; 
+        historicalStepSizeMoment=moment.duration("P"+conf_comparestepsize)
     }
 
 
@@ -524,7 +512,7 @@ function AlignedTimeseries(props) {
     }
 
     // Often provided by the PlatformState provider, but not when in first creation mode
-    const ctx = {tvMode: false, accountId: c_accountid, filters: undefined, timeRange: timeRangeMoment }
+    const ctx = {tvMode: false, accountId: c_accountid, filters: undefined}
 
     const cplatformstatecontext = ctx
     // useContext(PlatformStateContext);
@@ -548,42 +536,49 @@ function AlignedTimeseries(props) {
         if(overrideTimePicker) { // if a fixed window has been provided then we use that instead of any values delivered via the time picker.
             //tempoary unix removal test
             cplatformstatecontext.timeRange={}
-            cplatformstatecontext.timeRange.begin_time=timeRangeMoment.begin_time == null ? timeRangeMoment.begin_time : timeRangeMoment.begin_time.format("x") ;
-            cplatformstatecontext.timeRange.end_time=timeRangeMoment.end_time == null ? timeRangeMoment.end_time : timeRangeMoment.end_time.format("x") ;
-            cplatformstatecontext.timeRange.duration=timeRangeMoment.duration == null ? null : timeRangeMoment.duration.asSeconds() * 1000
+            cplatformstatecontext.timeRange.begin_time_moment=timeRangeMoment.begin_time  ;
+            cplatformstatecontext.timeRange.end_time_moment=timeRangeMoment.end_time ;
+            cplatformstatecontext.timeRange.duration_moment=timeRangeMoment.duration;
+        } else {
+            //data provided by time picker.
+            cplatformstatecontext.timeRange.begin_time_moment=timeRange.begin_time == null ? null : moment(timeRange.begin_time) ;
+            cplatformstatecontext.timeRange.end_time_moment=timeRange.end_time == null ? null : moment(timeRange.end_time) ;
+            cplatformstatecontext.timeRange.duration_moment=timeRange.duration  == null ? null : moment.duration(duration) ;
         }
     
     
          //the amount to shift each window back in time
-    
-            let sinceTime, untilTime ;
-    
-            if (cplatformstatecontext.timeRange && cplatformstatecontext.timeRange.duration == null){ //timepicker chosen start and end time
+
+            //moment version
+            let sinceTimeMoment, untilTimeMoment ;
+            if (cplatformstatecontext.timeRange && cplatformstatecontext.timeRange.duration_moment == null){ //timepicker chosen start and end time
                 console.log("Time range set by start/end time")
-                setWindowsize(  (parseInt(cplatformstatecontext.timeRange.end_time) - parseInt(cplatformstatecontext.timeRange.begin_time)) );
-                sinceTime = cplatformstatecontext.timeRange.begin_time
-                untilTime = cplatformstatecontext.timeRange.end_time
+                setWindowsizeMoment( moment.duration(cplatformstatecontext.timeRange.end_time_moment.diff(cplatformstatecontext.timeRange.begin_time_moment)) );
+                sinceTimeMoment = cplatformstatecontext.timeRange.begin_time_moment
+                untilTimeMoment = cplatformstatecontext.timeRange.end_time_moment
             } else if(cplatformstatecontext.timeRange && cplatformstatecontext.timeRange.duration != null) {  //timepicker value is relative
                 console.log("Time range set by duration")
-                let winsize = parseInt(cplatformstatecontext.timeRange.duration)
-                untilTime = Date.now();
-                sinceTime =  untilTime - winsize;
-                setWindowsize(winsize)
+                untilTimeMoment = moment.tz(conf_timezone)
+                sinceTimeMoment =  untilTimeMoment.clone().subtract(cplatformstatecontext.timeRange.duration_moment);
+                setWindowsizeMoment(moment.duration(untilTimeMoment.diff(sinceTimeMoment)))
             } else {
                 console.log("Time range not set, using default")
                 //no value set, use a default value
-                untilTime = Date.now();
-                sinceTime =  untilTime - DefaultWindowSize;
-                setWindowsize(DefaultWindowSize)
-            }
+                untilTimeMoment = moment.tz(conf_timezone)
+                sinceTimeMoment =  untilTimeMoment.clone().subtract( DefaultWindowSizeMoment );
+                setWindowsizeMoment(DefaultWindowSizeMoment)
+            }         
+
     
             let numCompare = (conf_compare !== null && conf_compare !== "") ? parseInt(conf_compare)  : 0        //default to no compare
             let timeseriesOption= (conf_timeseries !== null && conf_timeseries !== "") ? conf_timeseries : "AUTO"  // default to auto timeseries
+            
+            //moment version
             for (let i = 0; i <= numCompare; i++) {
-                let step = historicalStepSize > 0 ? historicalStepSize : windowsize;
-                let from = sinceTime - (step * i);
-                let until = untilTime - (step * i);
-                let query = mainquery + " SINCE " + from + " until "+ until  + " TIMESERIES " + timeseriesOption
+                let step = historicalStepSizeMoment.asSeconds() > 0 ? moment.duration(historicalStepSizeMoment.asMilliseconds() * i) : moment.duration(windowsizeMoment*1);
+                let from = sinceTimeMoment.clone().subtract( step ).format("YYYY-MM-DD HH:mm:ss") 
+                let until = untilTimeMoment.clone().subtract( step).format("YYYY-MM-DD HH:mm:ss") 
+                let query = mainquery + " SINCE '" + from + "' until '"+ until  + "' WITH TIMEZONE '" + conf_timezone + "' TIMESERIES " + timeseriesOption
                 if (i == 0 ) { 
                     nrqlQueries[0].query = query  
                 } else {
@@ -591,6 +586,7 @@ function AlignedTimeseries(props) {
                 }                
             }
     
+            console.log("nrqlQueries",nrqlQueries)
     
         let promises=nrqlQueries.map((q)=>{return NrqlQuery.query({accountIds: [q.accountId], query: q.query,formatTypeenum: NrqlQuery.FORMAT_TYPE.CHART})})
         let data
@@ -640,11 +636,11 @@ function AlignedTimeseries(props) {
             let refreshratems = (conf_refreshrate === null || conf_refreshrate === "null") ? null : parseInt(conf_refreshrate)*1000
 
             if(refreshratems === null ) {
-                if (windowsize <= 60000) { // 1 minute or less -> refresh every 10 seconds
+                if (windowsizeMoment.asMilliseconds() <= 60000) { // 1 minute or less -> refresh every 10 seconds
                     refreshratems = 10*1000 
-                } else if (windowsize <= 300000 ) { //1 minute to 5 minutes -> refresh every 30 seconds
+                } else if (windowsizeMoment.asMilliseconds() <= 300000 ) { //1 minute to 5 minutes -> refresh every 30 seconds
                     refreshratems = 30*1000 
-                } else if (windowsize <= 3600000 ) { // 5 minutes to 60 minutes -> refresh every 1 minute 
+                } else if (windowsizeMoment.asMilliseconds() <= 3600000 ) { // 5 minutes to 60 minutes -> refresh every 1 minute 
                     refreshratems = 60*1000 
                 } else { // over 60 minutes -> refresh every 5 minutes
                     refreshratems = 60*5*1000
@@ -766,6 +762,7 @@ function AlignedTimeseries(props) {
             yLabel = { value: conf_yaxislabel, angle: -90, position: 'insideLeft', style: {fontSize: '0.9rem',fontWeight: 'bold',  fontFamily: '"Inter", "Segoe UI", "Tahoma", sans-serif'}}
         }
 
+        let xLabel={value: "Time zone: "+conf_timezone, offset: 0, angle: 0, position: 'insideBottomRight', style: {fontSize: '0.6rem',fontWeight: 'bold',  fontFamily: '"Inter", "Segoe UI", "Tahoma", sans-serif'}}
 
         // Y axis - supports recharts somain syntax: https://recharts.org/en-US/api/YAxis#domain
         let yAxisDomain=['auto','auto']
@@ -793,7 +790,13 @@ function AlignedTimeseries(props) {
             {({ width, height }) => (<div style={{ height: height, width: width }}>
             <ComposedChart width={width} height={height} margin={{top: 10, right: 50, bottom: 30, left: LeftMargin}}>
           <CartesianGrid strokeDasharray="3 3" /> 
-          <XAxis tickFormatter={(x)=>{return convertTimestampToDate(x,'xtick',windowsize);}} dataKey="x"  type="category" allowDuplicatedCategory={false} interval="equidistantPreserveStart"  style={{
+          <XAxis tickFormatter={(x)=>{return convertTimestampToDate(x,'xtick',windowsizeMoment.asMilliseconds());}} 
+                label={xLabel}
+                dataKey="x"  
+                type="category" 
+                allowDuplicatedCategory={false} 
+                interval="equidistantPreserveStart"  
+                style={{
                     fontSize: '0.8rem',
                     fontFamily: '"Inter", "Segoe UI", "Tahoma", sans-serif'
                 }}/>
@@ -809,7 +812,7 @@ function AlignedTimeseries(props) {
                     fontFamily: '"Inter", "Segoe UI", "Tahoma", sans-serif'
                 }}
             />
-          <Tooltip labelFormatter={(value)=>{return convertTimestampToDate(value,'tooltip',windowsize);}} />
+          <Tooltip labelFormatter={(value)=>{return convertTimestampToDate(value,'tooltip',windowsizeMoment.asMilliseconds());}} />
           <Legend />
           {linechartdata.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={5} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>))}   
           {arechartdata.map((s) => (<Area type="monotone" fill={s.metadata.color} dataKey="y" data={s.data}  name={s.metadata.name} strokeWidth={0} key={s.metadata.name}/>))}
