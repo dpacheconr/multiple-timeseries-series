@@ -4,6 +4,13 @@
     "displayName": "test: period comparison",
     "description": "Displays timeseries data from different periods on the same chart",
     "configuration": [
+        
+        {
+            "name": "conf_toggleReload",
+            "title": "Toggle Reload",
+            "type": "boolean"
+        },
+
         {
             "name": "grp_data",
             "title": "Data source",
