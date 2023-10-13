@@ -444,7 +444,6 @@ function AlignedTimeseries(props) {
     //parsing period data
     if(conf_duration !=="" && conf_duration !==null) {
         console.log("Parsed duration",moment.duration("P"+conf_duration).asSeconds())
-        parsedDuration=moment.duration("P"+conf_duration).asSeconds() * 1000;
         durationMoment=moment.duration("P"+conf_duration)
     }
     if(conf_comparestepsize !=="" && conf_comparestepsize !==null) {
@@ -813,11 +812,11 @@ function AlignedTimeseries(props) {
         // Y axis - supports recharts somain syntax: https://recharts.org/en-US/api/YAxis#domain
         let yAxisDomain=['auto','auto']
         if(conf_yaxismax !== "" && conf_yaxismax!= null) {
-            let val = parseInt(conf_yaxismax)
+            let val = parseFloat(conf_yaxismax)
              yAxisDomain[1]=isNaN(val) ? conf_yaxismax : val
         }
         if(conf_yaxismin !== "" && conf_yaxismin!= null) {
-            let val = parseInt(conf_yaxismin)
+            let val = parseFloat(conf_yaxismin)
             yAxisDomain[0]=isNaN(val) ? conf_yaxismin : val
         }
 
@@ -827,9 +826,9 @@ function AlignedTimeseries(props) {
         if(conf_referenceareas && conf_referenceareas.length > 0) {
             conf_referenceareas.forEach((ref)=>{
                 if(ref.conf_refType !== null && ((ref.conf_refY1!==null & ref.conf_refY1!=="") || (ref.conf_refY2!==null & ref.conf_refY2!=="")) ) {
-                    console.log("HERE2")
-                    let y1=ref.conf_refY1 ===  null || ref.conf_refY1==="" ? null : parseInt(ref.conf_refY1);
-                    let y2=ref.conf_refY2 ===  null || ref.conf_refY2==="" ? null : parseInt(ref.conf_refY2);
+
+                    let y1=ref.conf_refY1 ===  null || ref.conf_refY1==="" ? null : ref.conf_refY1;
+                    let y2=ref.conf_refY2 ===  null || ref.conf_refY2==="" ? null : ref.conf_refY2;
                     let color=ref.conf_refColor ===  null || ref.conf_refColor==="" ? "#33333322" : ref.conf_refColor;
 
                     let labelColor="#666666";
