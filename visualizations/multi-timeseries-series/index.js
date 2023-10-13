@@ -15,7 +15,7 @@ var _ = require('lodash');
 
 let c_accountid
 let trimpercent = 10
-let clipSize=2
+let clipSize=1
 let avgbol = false
 
 const DefaultWindowSizeMoment=moment.duration("PT1H")
@@ -263,7 +263,7 @@ function AlignedTimeseries(props) {
                     trimpercent = 10
                 }
                 if (clipSize == undefined){
-                    clipSize = 1
+                    clipSize = clipSize // use default global clipSize
                 }
     
                 trimmedmin.push(mins)
@@ -737,8 +737,12 @@ function AlignedTimeseries(props) {
             queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "minmaxarea") ){arechartdata.push(r.data[0])}})
         }
 
-        if( conf_clippedareabol == true ) {
+        if( conf_clippedareabol == true ) { 
+            if (vizchartData.length <= 4){// only if we comparing 4 or more to current
+                console.log("Not clipping not enough series available, total availble series now is ",vizchartData.length)
+            }else {
             queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "clippedarea") ){arechartdata.push(r.data[0])}})
+            }
         }
         
         if (conf_hideoriginaldata === true ) {

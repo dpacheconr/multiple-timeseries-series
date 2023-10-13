@@ -240,7 +240,7 @@
                 {
                     "name": "conf_clipsize",
                     "title": "Clip size",
-                    "description": "Number of pointsto clip from data set",
+                    "description": "Number of points to clip from data set, defaults to 1",
                     "type": "string"
                 }
             ]
