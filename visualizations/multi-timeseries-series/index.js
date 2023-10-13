@@ -737,12 +737,12 @@ function AlignedTimeseries(props) {
             queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "minmaxarea") ){arechartdata.push(r.data[0])}})
         }
 
-        if( conf_clippedareabol == true ) { 
-            if (vizchartData.length <= 4){// only if we comparing 4 or more to current
-                console.log("Not clipping not enough series available, total availble series now is ",vizchartData.length)
-            }else {
+        if( conf_clippedareabol == true) { // only if amount comparing series is at least 4 times size of clipsize
+            if (vizchartData.length-1 < clipSize*4){
+                console.log("Check your clipsize, currently set to ", clipSize, "but not comparing enough data, total availble series now is ",vizchartData.length-1)            
+            } else {
             queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "clippedarea") ){arechartdata.push(r.data[0])}})
-            }
+        }
         }
         
         if (conf_hideoriginaldata === true ) {
