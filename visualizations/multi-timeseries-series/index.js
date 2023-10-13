@@ -668,7 +668,7 @@ function AlignedTimeseries(props) {
     }
     if(conf_toggleReload != toggleReload) {
         setToggleReload(conf_toggleReload)
-        dataLoader
+        dataLoader()
     }
 
     useEffect(async () => {   
