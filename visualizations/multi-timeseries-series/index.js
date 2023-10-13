@@ -846,7 +846,7 @@ function AlignedTimeseries(props) {
 
         //grid
         let chartGrid=null;
-        if(grp_display.conf_gridbol!==null && grp_display.conf_gridbol===true) {
+        if(conf_gridbol!==null && conf_gridbol===true) {
             chartGrid=<CartesianGrid  strokeDasharray="3 3" /> 
         }
 
