@@ -1,7 +1,7 @@
 {
     "schemaType": "VISUALIZATION",
     "id": "multi-timeseries-series",
-    "displayName": "test: period comparison",
+    "displayName": "Multi Period Comparison",
     "description": "Displays timeseries data from different periods on the same chart",
     "configuration": [
         
@@ -301,7 +301,7 @@
                     "name": "conf_refColor",
                     "title": "Color (css)",
                     "description": "The color of the area, in CSS. Opacity is supported. e.g. 'red', '#FC65D688'",
-                    "type": "number"
+                    "type": "string"
                 }
             ]
         }
