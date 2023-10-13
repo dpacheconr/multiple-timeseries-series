@@ -84,7 +84,8 @@ function AlignedTimeseries(props) {
         grp_history,
         grp_layers,
         grp_display,
-        conf_referenceareas
+        conf_referenceareas,
+        conf_toggleReload
     } = props;
 
         // !! The creator returns nulls and empty string, the editor undefined!
@@ -92,7 +93,7 @@ function AlignedTimeseries(props) {
         const conf_accountId = !grp_data ? null : grp_data.conf_accountId == undefined ? null : grp_data.conf_accountId ;
         const conf_query = !grp_data ? null : grp_data.conf_query  == undefined ? null :grp_data.conf_query;
         const conf_timeseries = !grp_data ? null : grp_data.conf_timeseries  == undefined ? null : grp_data.conf_timeseries;
-        const conf_timezone = !grp_data ? null : grp_data.conf_timezone  == undefined ? "UTC" : grp_data.conf_timezone;
+        const conf_timezone = !grp_data ? null : grp_data.conf_timezone  == undefined ? "UTC" : (grp_data.conf_timezone === null || grp_data.conf_timezone === "") ? "UTC" : grp_data.conf_timezone;
         const conf_clockchangebol = !grp_data ? null : grp_data.conf_clockchangebol  == undefined ? false : grp_data.conf_clockchangebol;
         
 
@@ -425,7 +426,8 @@ function AlignedTimeseries(props) {
     const [queryResults, setQueryResults] = useState(null);
     const [globalError, setGlobalError] = useState(null);
     const [windowsizeMoment, setWindowsizeMoment] = useState(DefaultWindowSizeMoment.clone());
-    
+    const [toggleReload, setToggleReload] = useState(true);
+
     let timeRangeMoment;
     let overrideTimePicker=false;
 
@@ -625,8 +627,6 @@ function AlignedTimeseries(props) {
                 }                
             }
     
-            console.log("nrqlQueries",nrqlQueries)
-    
         let promises=nrqlQueries.map((q)=>{return NrqlQuery.query({accountIds: [q.accountId], query: q.query,formatTypeenum: NrqlQuery.FORMAT_TYPE.CHART})})
         let data
         
@@ -667,10 +667,14 @@ function AlignedTimeseries(props) {
         calculatedata(data)
         setQueryResults(data)
     }
-
+    if(conf_toggleReload != toggleReload) {
+        setToggleReload(conf_toggleReload)
+        dataLoader()
+    }
 
     useEffect(async () => {   
         dataLoader()   
+
             let refreshratems = (conf_refreshrate === null || conf_refreshrate === "null") ? null : parseInt(conf_refreshrate)*1000
 
             if(refreshratems === null ) {
@@ -891,9 +895,9 @@ function AlignedTimeseries(props) {
           <Legend />
           {referenceAreas}
           {referenceLines}
-          {linechartdata.map((s) => (<Line type="linear" dot={false} stroke={s.metadata.color} strokeWidth={5} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>))}   
+          {linechartdata.map((s) => (<Line type="monotone" dot={false} stroke={s.metadata.color} strokeWidth={5} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>))}   
           {arechartdata.map((s) => (<Area type="monotone" fill={s.metadata.color} dataKey="y" legendType='none' data={s.data}  name="" strokeWidth={0} key={s.metadata.name}/>))}
-          {vizchartData.map((s) => {return <Line type="linear" dot={showDots} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>})}
+          {vizchartData.map((s) => {return <Line type="monotone" dot={showDots} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>})}
           {refPoint}
         </ComposedChart>
         <Grid>
