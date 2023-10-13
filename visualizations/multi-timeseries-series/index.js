@@ -93,6 +93,8 @@ function AlignedTimeseries(props) {
         const conf_query = !grp_data ? null : grp_data.conf_query  == undefined ? null :grp_data.conf_query;
         const conf_timeseries = !grp_data ? null : grp_data.conf_timeseries  == undefined ? null : grp_data.conf_timeseries;
         const conf_timezone = !grp_data ? null : grp_data.conf_timezone  == undefined ? "UTC" : grp_data.conf_timezone;
+        const conf_clockchangebol = !grp_data ? null : grp_data.conf_clockchangebol  == undefined ? false : grp_data.conf_clockchangebol;
+        
 
         //grp_window
         const conf_startunixtime = !grp_window ? null : grp_window.conf_startunixtime  == undefined ? null :grp_window.conf_startunixtime ;
@@ -445,7 +447,6 @@ function AlignedTimeseries(props) {
     }
     if(conf_comparestepsize !=="" && conf_comparestepsize !==null) {
         console.log("Parsed step size",moment.duration("P"+conf_comparestepsize).asSeconds())
-        historicalStepSize=moment.duration("P"+conf_comparestepsize).asSeconds() * 1000; 
         historicalStepSizeMoment=moment.duration("P"+conf_comparestepsize)
     }
 
@@ -584,9 +585,39 @@ function AlignedTimeseries(props) {
             //moment version
             for (let i = 0; i <= numCompare; i++) {
                 let step = historicalStepSizeMoment.asSeconds() > 0 ? moment.duration(historicalStepSizeMoment.asMilliseconds() * i) : moment.duration(windowsizeMoment*1);
-                let from = sinceTimeMoment.clone().subtract( step ).format("YYYY-MM-DD HH:mm:ss") 
-                let until = untilTimeMoment.clone().subtract( step).format("YYYY-MM-DD HH:mm:ss") 
-                let query = mainquery + " SINCE '" + from + "' until '"+ until  + "' WITH TIMEZONE '" + conf_timezone + "' TIMESERIES " + timeseriesOption
+                let from = sinceTimeMoment.clone().subtract( step );
+                let until = untilTimeMoment.clone().subtract( step);
+
+
+                //Clock change adjustments - If we are comparing data from across periods where a clock change has happened then we'd prefer to align them.
+                // EXPERIMENTAL AND IN NEED OF TESTING OVER A CLOCK CHANGE - momnet or nrql might already apply some of this, only through testing can determine.
+                if(conf_clockchangebol === true) {
+                    //ensure historical step size is multiple of a day
+                    if(historicalStepSizeMoment.asSeconds() % moment.duration("P1D").asSeconds() !== 0) {
+                        console.log("Clock change alignment skipped because historical step size is not a multiple of a day")
+                    } else {
+                        //  get hour from current
+                        let currentHour = sinceTimeMoment.hour()
+                        let historicalHour = from.hour()
+                        if(currentHour !== historicalHour) { // if they are the same hour, nothing to do
+                            // calculate the directtion of the difference , careful of midnight wrapping. adjust accordingly
+                            if(historicalHour < currentHour || (historicalHour==23 && currentHour== 0)) {
+                                console.log(`Adjusting historical ${i} window +1 hour due to detected clock change`);
+                                from.add(1,'hour');
+                                until.add(1,'hour');
+                            } else {
+                                console.log(`Adjusting historical ${i} window -1 hour due to detected clock change`);
+                                from.subtract(1,'hour');
+                                until.subtract(1,'hour');
+                            }
+                        }
+                    }
+                }
+
+                let fromString=from.format("YYYY-MM-DD HH:mm:ss") ;
+                let untilString=until.format("YYYY-MM-DD HH:mm:ss") ;
+
+                let query = mainquery + " SINCE '" + fromString + "' until '"+ untilString  + "' WITH TIMEZONE '" + conf_timezone + "' TIMESERIES " + timeseriesOption
                 if (i == 0 ) { 
                     nrqlQueries[0].query = query  
                 } else {
@@ -788,7 +819,7 @@ function AlignedTimeseries(props) {
         if(conf_referenceareas && conf_referenceareas.length > 0) {
             conf_referenceareas.forEach((ref)=>{
                 if(ref.conf_refType !== null && ((ref.conf_refY1!==null & ref.conf_refY1!=="") || (ref.conf_refY2!==null & ref.conf_refY2!=="")) ) {
-
+                    console.log("HERE2")
                     let y1=ref.conf_refY1 ===  null || ref.conf_refY1==="" ? null : parseInt(ref.conf_refY1);
                     let y2=ref.conf_refY2 ===  null || ref.conf_refY2==="" ? null : parseInt(ref.conf_refY2);
                     let color=ref.conf_refColor ===  null || ref.conf_refColor==="" ? "#33333322" : ref.conf_refColor;

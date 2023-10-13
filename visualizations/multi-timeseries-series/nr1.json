@@ -125,6 +125,12 @@
                         { "title": "Pacific/Norfolk", "value": "Pacific/Norfolk" },
                         { "title": "Pacific/Tongatapu", "value": "Pacific/Tongatapu" }
                     ]
+                },
+                {
+                    "name": "conf_clockchangebol",
+                    "title": "Re-align clock changes",
+                    "description": "Re-aligns the data to attempt to deal with clock changes. Only valid if the historical step size is multiple of a full day.",
+                    "type": "boolean"
                 }
             ]
         },
