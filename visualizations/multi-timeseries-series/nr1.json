@@ -330,6 +330,12 @@
                     "type": "string"
                 },
                 {
+                    "name": "conf_valuerounding",
+                    "title": "Decimal point rounding",
+                    "description": "Numberof decimial poitns to round values to",
+                    "type": "number"
+                },
+                {
                     "name": "conf_showdots",
                     "title": "Show dots",
                     "description": "Show dots on line chart",

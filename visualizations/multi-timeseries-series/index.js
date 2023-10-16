@@ -11,9 +11,8 @@ import chroma from "chroma-js";
 var _ = require('lodash');
 
 let c_accountid
-let trimpercent = 10
-let clipSize=1
-let avgbol = false
+let trimpercent
+let clipSize
 
 const DefaultWindowSizeMoment=moment.duration("PT1H")
 
@@ -23,7 +22,7 @@ function avgfunction (array) {
     for (let i = 0; i < array.length; i++) {
         sum += array[i];
     }
-    return parseInt(sum / array.length)
+    return sum / array.length
 }
 
 function clipFunction (dataArray,size) {
@@ -60,17 +59,6 @@ function build_json(z,i,array,value) {
     datatopass[value]=array[i]
     return datatopass
 }
-
-
-function parse_data(array) {
-    let sets = []
-    array.forEach(el => {
-        sets.push(el)
-    })
-    return sets
-}
-
-
 
 
 
@@ -119,6 +107,7 @@ function AlignedTimeseries(props) {
         //grp_display
         const conf_alignment = !grp_display ? null :  grp_display.conf_alignment == undefined ? null : grp_display.conf_alignment;
         const conf_refreshrate = !grp_display ? null : grp_display.conf_refreshrate == undefined ? null : grp_display.conf_refreshrate;
+        const conf_valuerounding = !grp_display ? null : grp_display.conf_valuerounding == undefined ? 2 : (grp_display.conf_valuerounding === null || grp_display.conf_valuerounding==="" ) ? 2 : grp_display.conf_valuerounding;
         const conf_yaxislabel = !grp_display ? null : grp_display.conf_yaxislabel == undefined ? null : grp_display.conf_yaxislabel;
         const conf_yaxismax = !grp_display ? null : grp_display.conf_yaxismax == undefined ? null : grp_display.conf_yaxismax;
         const conf_yaxismin = !grp_display ? null : grp_display.conf_yaxismin == undefined ? null : grp_display.conf_yaxismin;
@@ -137,6 +126,9 @@ function AlignedTimeseries(props) {
         if (objname == "tooltip"){
             let formatter= (conf_datetimestringformat_tooltip === null || conf_datetimestringformat_tooltip==="") ? "YYYY/MM/DD hh:mm:ss" : conf_datetimestringformat_tooltip
             output = moment.tz(timestamp,conf_timezone).format(formatter)
+        } if (objname == "csv"){
+            let formatter=  "YYYY/MM/DD hh:mm:ss" ;
+            output = moment.tz(timestamp,conf_timezone).format(formatter)
         } else {
             let formatter='YYYY/MM/DD HH:mm'
             if(conf_datetimestringformat_xaxis === null || conf_datetimestringformat_xaxis==="") {
@@ -149,7 +141,7 @@ function AlignedTimeseries(props) {
                 } else if( winsizesecs <= moment.duration("P31D").asSeconds() ){
                     formatter="YYYY/MM/DD HH:mm"
                 } else {
-                    formatter="YYYY/MM/DD hha"
+                    formatter="YYYY/MM/DD ha"
                 }
             } else {
                 formatter=conf_datetimestringformat_xaxis
@@ -194,7 +186,7 @@ function AlignedTimeseries(props) {
             for(var i = 0; i < sorted.length; i++) {   
                 if (i <=1) {
                     let c_key = String(sorted[i])
-                    let item_val = convertTimestampToDate(array[sorted[i]])
+                    let item_val = convertTimestampToDate(array[sorted[i]],"csv")
                     tempDict[c_key]= item_val
                 } else {
                 let c_key = String(sorted[i])
@@ -227,7 +219,7 @@ function AlignedTimeseries(props) {
         for (let i = 0; i < data[0].data[0].data.length; i++) {     //iterate over each bucket, using the first series as control
             let ctrlarray = [] //this is the y values for the current i'th bucket 
             data.forEach((z,idx)=>{
-                if (idx > 0) { //we dont want to include the most recent series in the data
+                if (idx > 0) { //we dont want to include the most recent series in the data used for calculations
                     ctrlarray.push(z.data[0].data[i].y)
                  }  
             })
@@ -249,83 +241,75 @@ function AlignedTimeseries(props) {
         let clippedmax = []
     
     
-            resultarray.forEach((yvalues) => {
+        resultarray.forEach((yvalues) => {
+
+            let minMax = getMinMax(yvalues)
+            let minValue = minMax[0]
+            let maxValue =  minMax[1]
+
+            avgarr.push(avgfunction(yvalues))
+
+            let mins = ((maxValue - minValue)*parseFloat(trimpercent/100))+minValue
+            let maxs = maxValue - ((maxValue - minValue)*parseFloat(trimpercent/100))
+
+            trimmedmin.push(mins)
+            trimmedmax.push(maxs)
+            trimmedarea.push([mins,maxs])
+
+            minmaxmins.push(minValue)
+            minmaxmaxs.push(maxValue)
+            minmaxarea.push([minValue,maxValue])       
+
+            //determine clipped area
+            let clippedData=clipFunction(yvalues,parseInt(clipSize))
+            let c_area = getMinMax(clippedData)
+            clippedarea.push(c_area)
+            clippedmin.push(c_area[0])
+            clippedmax.push(c_area[1])
+
+        })
+
+        for (let i = 0; i < data[0].data[0].data.length; i++) {  
+            let z = data[0].data[0].data[i]
+
+            avgarrctrl.push(build_json(z,i,avgarr,"avg"))
+
+            trimmedareactrl.push(build_json(z,i,trimmedarea,"trimmedarea"))
+            trimmedminctrl.push(build_json(z,i,trimmedmin,"trimmedmin"))
+            trimmedmaxctrl.push(build_json(z,i,trimmedmax,"trimmedmax"))
+
+            minmaxareactrl.push(build_json(z,i,minmaxarea,"minmaxarea"))
+            minmaxminsctrl.push(build_json(z,i,minmaxmins,"min"))
+            minmaxmaxsctrl.push(build_json(z,i,minmaxmaxs,"max"))
+
+            clippedminctrl.push(build_json(z,i,clippedmin,"clippedmin"))
+            clippedmaxctrl.push(build_json(z,i,clippedmax,"clippedmax"))
+            clippedareactrl.push(build_json(z,i,clippedarea,"clippedarea"))
+
+        }
     
-                let minMax = getMinMax(yvalues)
-                let minValue = minMax[0]
-                let maxValue =  minMax[1]
-    
-                avgarr.push(avgfunction(yvalues))
-    
-                let mins = parseInt(((maxValue - minValue)*(trimpercent/100))+minValue)
-                let maxs = parseInt(maxValue - ((maxValue - minValue)*(trimpercent/100)))
-                
-                if (trimpercent == undefined){
-                    trimpercent = 10
-                }
-                if (clipSize == undefined){
-                    clipSize = clipSize // use default global clipSize
-                }
-    
-                trimmedmin.push(mins)
-                trimmedmax.push(maxs)
-                trimmedarea.push([mins,maxs])
-    
-                minmaxmins.push(minValue)
-                minmaxmaxs.push(maxValue)
-                minmaxarea.push([minValue,maxValue])       
-    
-                //determine clipped area
-                let clippedData=clipFunction(yvalues,parseInt(clipSize))
-                let c_area = getMinMax(clippedData)
-                clippedarea.push(c_area)
-                clippedmin.push(c_area[0])
-                clippedmax.push(c_area[1])
-    
-            })
-    
-            for (let i = 0; i < data[0].data[0].data.length; i++) {  
-                let z = data[0].data[0].data[i]
-    
-                avgarrctrl.push(build_json(z,i,avgarr,"avg"))
-    
-                trimmedareactrl.push(build_json(z,i,trimmedarea,"trimmedarea"))
-                trimmedminctrl.push(build_json(z,i,trimmedmin,"trimmedmin"))
-                trimmedmaxctrl.push(build_json(z,i,trimmedmax,"trimmedmax"))
-    
-                minmaxareactrl.push(build_json(z,i,minmaxarea,"minmaxarea"))
-                minmaxminsctrl.push(build_json(z,i,minmaxmins,"min"))
-                minmaxmaxsctrl.push(build_json(z,i,minmaxmaxs,"max"))
-    
-                clippedminctrl.push(build_json(z,i,clippedmin,"clippedmin"))
-                clippedmaxctrl.push(build_json(z,i,clippedmax,"clippedmax"))
-                clippedareactrl.push(build_json(z,i,clippedarea,"clippedarea"))
-    
-            }
-    
-        let avgset = parse_data (avgarrctrl)
-        let trimmedareaset = parse_data (trimmedareactrl)
-        let trimmedminset = parse_data (trimmedminctrl)
-        let trimmedmaxset = parse_data (trimmedmaxctrl)
-        let minmaxareaset = parse_data (minmaxareactrl)
-        let minset = parse_data (minmaxminsctrl)
-        let maxset = parse_data (minmaxmaxsctrl)
-        let clippedareaset = parse_data(clippedareactrl)
-        let clippedminset = parse_data(clippedminctrl)
-        let clippedmaxset = parse_data(clippedmaxctrl)
-    
+
       
         // update queries with calculated data
-        data.push({"data":[{"data":avgset, "metadata":{"viz":"main","name": "avg","id":"74B5B05EEA583471E03DCBF0123D81CC79CAE0FE9", "color": getColor(1)}}],loading: false, error: null})
-        data.push({"data":[{"data":trimmedareaset, "metadata":{"viz":"main","name": "trimmedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CEE0FE9", "color":getColor("trimmedArea")}}],loading: false, error: null})
-        data.push({"data":[{"data":trimmedminset, "metadata":{"viz":"main","name": "trimmedmin","id":"02D6A84F7B97E4709A11276615FDAAB3EE2BEE415", "color": getColor(2)}}],loading: false, error: null})
-        data.push({"data":[{"data":trimmedmaxset, "metadata":{"viz":"main","name": "trimmedmax","id":"2C1F4F2BAA2800FD80F50C3811F38D03B52DEEEB1", "color":getColor(2)}}],loading: false, error: null})
-        data.push({"data":[{"data":clippedareaset, "metadata":{"viz":"main","name": "clippedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0JE8", "color": getColor("clippedArea")}}],loading: false, error: null})
-        data.push({"data":[{"data":clippedminset, "metadata":{"viz":"main","name": "clippedmin","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0LE8", "color": getColor(3)}}],loading: false, error: null})
-        data.push({"data":[{"data":clippedmaxset, "metadata":{"viz":"main","name": "clippedmax","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE8", "color": getColor(3)}}],loading: false, error: null})
-        data.push({"data":[{"data":minmaxareaset, "metadata":{"viz":"main","name": "minmaxarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE9", "color": getColor("minmaxArea")}}],loading: false, error: null})
-        data.push({"data":[{"data":minset, "metadata":{"viz":"main","name": "min","id":"625D011FAC794651F25160AD89612DFAAE954C0CB", "color":getColor(3)}}],loading: false, error: null})
-        data.push({"data":[{"data":maxset, "metadata":{"viz":"main","name": "max","id":"DDB4E3844C923B3F794EC52642E22CBE9FC8D8D31", "color": getColor(3)}}],loading: false, error: null})
+        if(conf_average === true) { 
+            data.push({"data":[{"data":avgarrctrl, "metadata":{"viz":"main","name": "avg","id":"74B5B05EEA583471E03DCBF0123D81CC79CAE0FE9", "color": getColor(1)}}],loading: false, error: null});
+        }
+        if(conf_trimmedareabol === true) {
+            data.push({"data":[{"data":trimmedareactrl, "metadata":{"viz":"main","name": "trimmedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CEE0FE9", "color":getColor("trimmedArea")}}],loading: false, error: null})
+            data.push({"data":[{"data":trimmedminctrl, "metadata":{"viz":"main","name": "trimmedmin","id":"02D6A84F7B97E4709A11276615FDAAB3EE2BEE415", "color": getColor(2)}}],loading: false, error: null})
+            data.push({"data":[{"data":trimmedmaxctrl, "metadata":{"viz":"main","name": "trimmedmax","id":"2C1F4F2BAA2800FD80F50C3811F38D03B52DEEEB1", "color":getColor(2)}}],loading: false, error: null})
+        }
+        if(conf_clippedareabol === true) {
+            data.push({"data":[{"data":clippedareactrl, "metadata":{"viz":"main","name": "clippedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0JE8", "color": getColor("clippedArea")}}],loading: false, error: null})
+            data.push({"data":[{"data":clippedminctrl, "metadata":{"viz":"main","name": "clippedmin","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0LE8", "color": getColor(3)}}],loading: false, error: null})
+            data.push({"data":[{"data":clippedmaxctrl, "metadata":{"viz":"main","name": "clippedmax","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE8", "color": getColor(3)}}],loading: false, error: null})
+        }
+        
+        if( conf_minmaxareabol === true) {
+            data.push({"data":[{"data":minmaxareactrl, "metadata":{"viz":"main","name": "minmaxarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE9", "color": getColor("minmaxArea")}}],loading: false, error: null})
+            data.push({"data":[{"data":minmaxminsctrl, "metadata":{"viz":"main","name": "min","id":"625D011FAC794651F25160AD89612DFAAE954C0CB", "color":getColor(3)}}],loading: false, error: null})
+            data.push({"data":[{"data":minmaxmaxsctrl, "metadata":{"viz":"main","name": "max","id":"DDB4E3844C923B3F794EC52642E22CBE9FC8D8D31", "color": getColor(3)}}],loading: false, error: null})
+        }
        
     }
 
@@ -513,33 +497,17 @@ function AlignedTimeseries(props) {
             end_time: null
         };
         overrideTimePicker=true;
-    } else {
-        console.log("Shouldnt be here")
     }
 
-    // Often provided by the PlatformState provider, but not when in first creation mode
-    // const ctx = {tvMode: false, accountId: c_accountid, filters: undefined}
-
-    // const cplatformstatecontext = ctx
-    // useContext(PlatformStateContext);
- 
-
-
-    // Use during production
     const cplatformstatecontext = useContext(PlatformStateContext);
 
     async function  dataLoader() {
         c_accountid = conf_accountId
         let mainquery = conf_query
-        avgbol = conf_average
         let nrqlQueries = [{accountId: c_accountid, query: conf_query, color: getColor('primary')} ]
     
-        if (conf_trimpercent != "") {
-            trimpercent = conf_trimpercent
-        }
-        if (conf_clipsize != "") {
-            clipSize = conf_clipsize
-        }
+        trimpercent = (conf_trimpercent != "" && conf_trimpercent!=null) ? conf_trimpercent : 10; //default to 10
+        clipSize = (conf_clipsize != "" && conf_clipsize != null ) ? conf_clipsize : 1;
     
         if(overrideTimePicker) { // if a fixed window has been provided then we use that instead of any values delivered via the time picker.
             //tempoary unix removal test
@@ -626,7 +594,6 @@ function AlignedTimeseries(props) {
     
         let promises=nrqlQueries.map((q)=>{return NrqlQuery.query({accountIds: [q.accountId], query: q.query,formatTypeenum: NrqlQuery.FORMAT_TYPE.CHART})})
         let data
-        
     
         try {
             data = await Promise.all(promises)
@@ -641,12 +608,13 @@ function AlignedTimeseries(props) {
     
        // name the queries and update the colours
        let count = 1
-       data.forEach(el => {
+
+       data.forEach(series => {
            if (count != 1){
-               let c_name = data[0].data[0].metadata.name
-               el.data[0].metadata.name = data[0].data[0].metadata.name+(count-1)
-               el.data[0].metadata.color = getColor(count-2)
-               el.data[0].data.forEach(c_array => {
+               let c_name = data[0].data[0].metadata.name //grab the field name from the main query
+               series.data[0].metadata.name = data[0].data[0].metadata.name+(count-1) //name the historical series with the field name + count
+               series.data[0].metadata.color = getColor(count-2) //choose a colour for this series
+               series.data[0].data.forEach(c_array => {  //update the name of the field in each point value block for the series
                    for( let item in c_array){
                        if (item == c_name){
                            let item_val = c_array[item]
@@ -692,9 +660,7 @@ function AlignedTimeseries(props) {
                 setInterval(() => {dataLoader();}, refreshratems);
             }
         
-
-
-        return () => clearInterval(interval);            
+        return () => clearInterval(interval);         //whats this? whats interval?   
      },{...props});
 
     
@@ -753,23 +719,45 @@ function AlignedTimeseries(props) {
         let linechartdata = []
         let arechartdata = []
 
-        queryResults.forEach(r=>{ if(r.data && r.data[0] && r.data[0].metadata.name != "trimmedarea" && r.data[0].metadata.name != "minmaxarea" && r.data[0].metadata.name != "clippedarea") {exportchartData.push(r.data[0])}}) 
-        queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name != "min" && r.data[0].metadata.name != "max" && r.data[0].metadata.name != "trimmedmin" && r.data[0].metadata.name != "trimmedmax" && r.data[0].metadata.name != "avg" && r.data[0].metadata.name != "trimmedarea" && r.data[0].metadata.name != "minmaxarea" && r.data[0].metadata.name != "clippedarea" && r.data[0].metadata.name != "clippedmin" && r.data[0].metadata.name != "clippedmax") ){vizchartData.push(r.data[0])}}) 
-        
+        //rounding
+        queryResults.forEach((series)=>{
+            if(series.data && series.data[0]) {
+                let fieldName=series.data[0].metadata.name;
+                series.data[0].data.forEach((el)=>{
+                    if(Array.isArray(el.y)) {
+                        el.y[0]=parseFloat(el.y[0]).toFixed(parseInt(conf_valuerounding));
+                        el.y[1]=parseFloat(el.y[1]).toFixed(parseInt(conf_valuerounding));
+                        el[fieldName][0]=parseFloat(el[fieldName][0]).toFixed(parseInt(conf_valuerounding));
+                        el[fieldName][1]=parseFloat(el[fieldName][1]).toFixed(parseInt(conf_valuerounding));
+                    } else {
+                        el.y=parseFloat(el.y).toFixed(parseInt(conf_valuerounding));
+                        el[fieldName]=parseFloat(el[fieldName]).toFixed(parseInt(conf_valuerounding));
+                    }
+                })
 
-        if( avgbol == true ) {
+                if(!["trimmedarea","minmaxarea","clippedarea"].includes(series.data[0].metadata.name)) {
+                    exportchartData.push(series.data[0])
+                }
+                if(!["min","max","trimmedmin","trimmedmax","avg","trimmedarea","minmaxarea","clippedarea","clippedmin","clippedmax"].includes(series.data[0].metadata.name)) {
+                    vizchartData.push(series.data[0])
+                }
+            }
+        })
+
+
+        if( conf_average === true ) {
             queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "avg") ){linechartdata.push(r.data[0])}})
             
         }
-        if( conf_trimmedareabol == true ) {
+        if( conf_trimmedareabol === true ) {
             queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "trimmedarea") ){arechartdata.push(r.data[0])}})
         }
         
-        if( conf_minmaxareabol == true ) {
+        if( conf_minmaxareabol === true ) {
             queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "minmaxarea") ){arechartdata.push(r.data[0])}})
         }
 
-        if( conf_clippedareabol == true) { // only if amount comparing series is at least 4 times size of clipsize
+        if( conf_clippedareabol === true) { // only if amount comparing series is at least 4 times size of clipsize
             if (vizchartData.length-1 < clipSize*4){
                 console.log("Check your clipsize, currently set to ", clipSize, "but not comparing enough data, total availble series now is ",vizchartData.length-1)            
             } else {
@@ -780,6 +768,8 @@ function AlignedTimeseries(props) {
         if (conf_hideoriginaldata === true ) {
             vizchartData=[vizchartData[0]]
         }
+
+        
 
         vizchartData[0].metadata.color=getColor('primary');
 
@@ -866,7 +856,7 @@ function AlignedTimeseries(props) {
 
         //CSV
         let outTable
-        if(grp_display.conf_csvbol!==null && grp_display.conf_csvbol===true) {
+        if(conf_csvbol!==null && conf_csvbol===true) {
             outTable=<div className="CSVloader"><Button>{csvTable}</Button></div>
         } else {
             outTable
