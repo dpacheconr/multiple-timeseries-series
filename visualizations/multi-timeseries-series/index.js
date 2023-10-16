@@ -107,7 +107,7 @@ function AlignedTimeseries(props) {
         //grp_display
         const conf_alignment = !grp_display ? null :  grp_display.conf_alignment == undefined ? null : grp_display.conf_alignment;
         const conf_refreshrate = !grp_display ? null : grp_display.conf_refreshrate == undefined ? null : grp_display.conf_refreshrate;
-        const conf_valuerounding = !grp_display ? null : grp_display.conf_valuerounding == undefined ? 2 : (grp_display.conf_valuerounding === null || grp_display.conf_valuerounding==="" ) ? 2 : grp_display.conf_valuerounding;
+        const conf_valuerounding = !grp_display ? null : grp_display.conf_valuerounding == undefined ? 4 : (grp_display.conf_valuerounding === null || grp_display.conf_valuerounding==="" ) ? 4 : grp_display.conf_valuerounding;
         const conf_yaxislabel = !grp_display ? null : grp_display.conf_yaxislabel == undefined ? null : grp_display.conf_yaxislabel;
         const conf_yaxismax = !grp_display ? null : grp_display.conf_yaxismax == undefined ? null : grp_display.conf_yaxismax;
         const conf_yaxismin = !grp_display ? null : grp_display.conf_yaxismin == undefined ? null : grp_display.conf_yaxismin;
