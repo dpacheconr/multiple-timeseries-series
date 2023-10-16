@@ -861,20 +861,20 @@ function AlignedTimeseries(props) {
         let refPoint= (referencePoint == null) ? null : <ReferenceDot fill={getColor('primary')}  x={vizchartData[0].data[referencePoint].x} y={vizchartData[0].data[referencePoint].y} isFront={true}/>;
 
         let csvTable= <>
-        <CSVLink filename="QueryData.csv" data={exportToCsv(exportchartData)}>Download data as CSV</CSVLink>
+        <CSVLink filename="QueryData.csv" data={exportToCsv(exportchartData)}>CSV</CSVLink>
         </>
 
         //CSV
         let outTable
         if(grp_display.conf_csvbol!==null && grp_display.conf_csvbol===true) {
-            outTable=<><Button>{csvTable}</Button></>
+            outTable=<div className="CSVloader"><Button>{csvTable}</Button></div>
         } else {
             outTable
         }
 
         return <AutoSizer>
-            {({ width, height }) => (<div style={{ height: height, width: width }}>
-          <ComposedChart width={width} height={height} margin={{top: 10, right: 50, bottom: 30, left: LeftMargin}}>
+            {({ width, height }) => (<div id="container" style={{ height: height, width: width}}>
+          <ComposedChart width={width-3} height={height-3} margin={{top: 10, right: 50, bottom: 30, left: LeftMargin}}>
           {chartGrid}
           <XAxis tickFormatter={(x)=>{return convertTimestampToDate(x,'xtick',windowsizeMoment.asMilliseconds());}} 
                 label={xLabel}
@@ -907,7 +907,7 @@ function AlignedTimeseries(props) {
           {vizchartData.map((s) => {return <Line type="monotone" dot={showDots} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>})}
           {refPoint}
         </ComposedChart>    
-        {outTable}
+        <div id="CSVloader">{outTable}</div>
         </div>
         )}
       </AutoSizer>
