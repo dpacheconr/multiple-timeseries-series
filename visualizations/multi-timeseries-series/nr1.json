@@ -347,6 +347,12 @@
                     "type": "boolean"
                 },
                 {
+                    "name": "conf_csvbol",
+                    "title": "Display CSV download button",
+                    "description": "Display CSV download button",
+                    "type": "boolean"
+                },
+                {
                     "name": "conf_colortheme",
                     "title": "Color theme",
                     "description": "Colour theme to use",
