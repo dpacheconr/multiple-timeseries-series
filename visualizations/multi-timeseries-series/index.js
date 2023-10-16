@@ -159,6 +159,7 @@ function AlignedTimeseries(props) {
         return output
     }
     function exportToCsv (querydataImput){
+        console.log("exportToCsv",querydataImput)
         var querydata = _.cloneDeep(querydataImput);
         let keys = ["begin_time","end_time","x","y"]
         let data=querydata.slice(1,querydata.length)
@@ -257,12 +258,13 @@ function AlignedTimeseries(props) {
     
                 avgarr.push(avgfunction(yvalues))
     
-                let mins = parseInt(((maxValue - minValue)*(trimpercent/100))+minValue)
-                let maxs = parseInt(maxValue - ((maxValue - minValue)*(trimpercent/100)))
-                
                 if (trimpercent == undefined){
-                    trimpercent = 10
+                    trimpercent = trimpercent // use default global trimpercent
                 }
+
+                let mins = ((maxValue - minValue)*parseFloat(trimpercent/100))+minValue
+                let maxs = maxValue - ((maxValue - minValue)*parseFloat(trimpercent/100))
+                
                 if (clipSize == undefined){
                     clipSize = clipSize // use default global clipSize
                 }
