@@ -4,6 +4,9 @@ This custom visualisation solves multiple different use cases. Its primary use c
 
 The reference use case is for reviewing order rates across the day. It answers the question: how are the order rates *today* tracking against the rates from historical weeks? We render a 'sleeve' that represents the normal traffic for those previous periods exclluding outliers allowing the user to see if the current days behaviour is tracking normally compared with the past.
 
+![example1.png](example1.png)
+![example2.png](example2.png)
+
 ## Features
 Sometimes its hard to stop adding really useful features! This visualisation can solve a variety of use cases by combining various features we've added:
 
