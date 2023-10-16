@@ -1,13 +1,10 @@
 /* eslint-disable react/prop-types */
 
 import React, { useState, useEffect, useContext} from 'react';
-import {NrqlQuery, Spinner,Grid,GridItem,AutoSizer,PlatformStateContext} from 'nr1';
+import {NrqlQuery, Spinner,Button,AutoSizer,PlatformStateContext} from 'nr1';
 import { Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ComposedChart,Area,ReferenceDot, ReferenceArea, ReferenceLine} from 'recharts';
 import { CSVLink } from "react-csv"
-
 import moment from 'moment-timezone';
-import { array } from 'prop-types';
-
 import chroma from "chroma-js";
 
 // Global variables
@@ -130,6 +127,7 @@ function AlignedTimeseries(props) {
         const conf_datetimestringformat_xaxis = !grp_display ? null : grp_display.conf_datetimestringformat_xaxis == undefined ? null : grp_display.conf_datetimestringformat_xaxis;
         const conf_datetimestringformat_tooltip = !grp_display ? null : grp_display.conf_datetimestringformat_tooltip == undefined ? null : grp_display.conf_datetimestringformat_tooltip;
         const conf_gridbol = !grp_display ? null : grp_display.conf_gridbol == undefined ? false : grp_display.conf_gridbol;
+        const conf_csvbol = !grp_display ? null : grp_display.conf_csvbol == undefined ? false : grp_display.conf_csvbol;
         
 
  
@@ -861,12 +859,22 @@ function AlignedTimeseries(props) {
         }
 
         let refPoint= (referencePoint == null) ? null : <ReferenceDot fill={getColor('primary')}  x={vizchartData[0].data[referencePoint].x} y={vizchartData[0].data[referencePoint].y} isFront={true}/>;
-        let outTable= <>
-            <CSVLink filename="QueryData.csv" data={exportToCsv(exportchartData)}>Download data as CSV</CSVLink>
+
+        let csvTable= <>
+        <CSVLink filename="QueryData.csv" data={exportToCsv(exportchartData)}>Download data as CSV</CSVLink>
         </>
+
+        //CSV
+        let outTable
+        if(grp_display.conf_csvbol!==null && grp_display.conf_csvbol===true) {
+            outTable=<><Button>{csvTable}</Button></>
+        } else {
+            outTable
+        }
+
         return <AutoSizer>
             {({ width, height }) => (<div style={{ height: height, width: width }}>
-            <ComposedChart width={width} height={height} margin={{top: 10, right: 50, bottom: 30, left: LeftMargin}}>
+          <ComposedChart width={width} height={height} margin={{top: 10, right: 50, bottom: 30, left: LeftMargin}}>
           {chartGrid}
           <XAxis tickFormatter={(x)=>{return convertTimestampToDate(x,'xtick',windowsizeMoment.asMilliseconds());}} 
                 label={xLabel}
@@ -898,12 +906,9 @@ function AlignedTimeseries(props) {
           {arechartdata.map((s) => (<Area type="monotone" fill={s.metadata.color} dataKey="y" legendType='none' data={s.data}  name="" strokeWidth={0} key={s.metadata.name}/>))}
           {vizchartData.map((s) => {return <Line type="monotone" dot={showDots} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>})}
           {refPoint}
-        </ComposedChart>
-        <Grid>
-            <GridItem columnSpan={12}>
-            {outTable}            </GridItem>
-        </Grid>
-          </div>
+        </ComposedChart>    
+        {outTable}
+        </div>
         )}
       </AutoSizer>
     } else {
