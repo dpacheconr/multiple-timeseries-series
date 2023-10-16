@@ -159,7 +159,6 @@ function AlignedTimeseries(props) {
         return output
     }
     function exportToCsv (querydataImput){
-        console.log("exportToCsv",querydataImput)
         var querydata = _.cloneDeep(querydataImput);
         let keys = ["begin_time","end_time","x","y"]
         let data=querydata.slice(1,querydata.length)
