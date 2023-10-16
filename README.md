@@ -93,7 +93,12 @@ These settings control the appearance of the chart.
 
 ## Installing
 
-Run the following after ensuring you have selected your nr1 profile  with `nr1 profiles:default`:
+Install dependencies:
+```
+npm install
+```
+
+Run the following after **ensuring you have selected your nr1 profile** with `nr1 profiles:default`:
 
 Generate a UUID (only do this once):
 ```
@@ -103,7 +108,6 @@ nr1 nerdpack:uuid -gf
 Publish to New Relic:
 ```
 nr1 nerdpack:publish
-nr1 nerdpack:deploy
 ```
 
 Subscribe your account:
