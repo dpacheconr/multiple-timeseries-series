@@ -279,8 +279,8 @@ function AlignedTimeseries(props) {
             trimmedmaxctrl.push(build_json(z,i,trimmedmax,"trimmedmax"))
 
             minmaxareactrl.push(build_json(z,i,minmaxarea,"minmaxarea"))
-            minmaxminsctrl.push(build_json(z,i,minmaxmins,"min"))
-            minmaxmaxsctrl.push(build_json(z,i,minmaxmaxs,"max"))
+            minmaxminsctrl.push(build_json(z,i,minmaxmins,"HISTORICALmin"))
+            minmaxmaxsctrl.push(build_json(z,i,minmaxmaxs,"HISTORICALmax"))
 
             clippedminctrl.push(build_json(z,i,clippedmin,"clippedmin"))
             clippedmaxctrl.push(build_json(z,i,clippedmax,"clippedmax"))
@@ -292,7 +292,7 @@ function AlignedTimeseries(props) {
       
         // update queries with calculated data
         if(conf_average === true) { 
-            data.push({"data":[{"data":avgarrctrl, "metadata":{"viz":"main","name": "avg","id":"74B5B05EEA583471E03DCBF0123D81CC79CAE0FE9", "color": getColor(1)}}],loading: false, error: null});
+            data.push({"data":[{"data":avgarrctrl, "metadata":{"viz":"main","name": "HISTORICALavg","id":"74B5B05EEA583471E03DCBF0123D81CC79CAE0FE9", "color": getColor(1)}}],loading: false, error: null});
         }
         if(conf_trimmedareabol === true) {
             data.push({"data":[{"data":trimmedareactrl, "metadata":{"viz":"main","name": "trimmedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CEE0FE9", "color":getColor("trimmedArea")}}],loading: false, error: null})
@@ -307,8 +307,8 @@ function AlignedTimeseries(props) {
         
         if( conf_minmaxareabol === true) {
             data.push({"data":[{"data":minmaxareactrl, "metadata":{"viz":"main","name": "minmaxarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE9", "color": getColor("minmaxArea")}}],loading: false, error: null})
-            data.push({"data":[{"data":minmaxminsctrl, "metadata":{"viz":"main","name": "min","id":"625D011FAC794651F25160AD89612DFAAE954C0CB", "color":getColor(3)}}],loading: false, error: null})
-            data.push({"data":[{"data":minmaxmaxsctrl, "metadata":{"viz":"main","name": "max","id":"DDB4E3844C923B3F794EC52642E22CBE9FC8D8D31", "color": getColor(3)}}],loading: false, error: null})
+            data.push({"data":[{"data":minmaxminsctrl, "metadata":{"viz":"main","name": "HISTORICALmin","id":"625D011FAC794651F25160AD89612DFAAE954C0CB", "color":getColor(3)}}],loading: false, error: null})
+            data.push({"data":[{"data":minmaxmaxsctrl, "metadata":{"viz":"main","name": "HISTORICALmax","id":"DDB4E3844C923B3F794EC52642E22CBE9FC8D8D31", "color": getColor(3)}}],loading: false, error: null})
         }
        
     }
@@ -502,6 +502,7 @@ function AlignedTimeseries(props) {
     const cplatformstatecontext = useContext(PlatformStateContext);
 
     async function  dataLoader() {
+        console.log("Data loader called");
         c_accountid = conf_accountId
         let mainquery = conf_query
         let nrqlQueries = [{accountId: c_accountid, query: conf_query, color: getColor('primary')} ]
@@ -591,11 +592,12 @@ function AlignedTimeseries(props) {
                     nrqlQueries.push({accountId: c_accountid, query: query, color: getColor(i)}) 
                 }                
             }
-    
+
         let promises=nrqlQueries.map((q)=>{return NrqlQuery.query({accountIds: [q.accountId], query: q.query,formatTypeenum: NrqlQuery.FORMAT_TYPE.CHART})})
         let data
     
         try {
+            console.log("Querying NRDB...");
             data = await Promise.all(promises)
             if (data[0].error != null){
                console.log(data[0].error.message)
@@ -725,20 +727,20 @@ function AlignedTimeseries(props) {
                 let fieldName=series.data[0].metadata.name;
                 series.data[0].data.forEach((el)=>{
                     if(Array.isArray(el.y)) {
-                        el.y[0]=parseFloat(el.y[0]).toFixed(parseInt(conf_valuerounding));
-                        el.y[1]=parseFloat(el.y[1]).toFixed(parseInt(conf_valuerounding));
-                        el[fieldName][0]=parseFloat(el[fieldName][0]).toFixed(parseInt(conf_valuerounding));
-                        el[fieldName][1]=parseFloat(el[fieldName][1]).toFixed(parseInt(conf_valuerounding));
+                        el.y[0]=parseFloat(parseFloat(el.y[0]).toFixed(parseInt(conf_valuerounding)));
+                        el.y[1]=parseFloat(parseFloat(el.y[1]).toFixed(parseInt(conf_valuerounding)));
+                        el[fieldName][0]=parseFloat(parseFloat(el[fieldName][0]).toFixed(parseInt(conf_valuerounding)));
+                        el[fieldName][1]=parseFloat(parseFloat(el[fieldName][1]).toFixed(parseInt(conf_valuerounding)));
                     } else {
-                        el.y=parseFloat(el.y).toFixed(parseInt(conf_valuerounding));
-                        el[fieldName]=parseFloat(el[fieldName]).toFixed(parseInt(conf_valuerounding));
+                        el.y=parseFloat(parseFloat(el.y).toFixed(parseInt(conf_valuerounding)));
+                        el[fieldName]=parseFloat(parseFloat(el[fieldName]).toFixed(parseInt(conf_valuerounding)));
                     }
                 })
 
                 if(!["trimmedarea","minmaxarea","clippedarea"].includes(series.data[0].metadata.name)) {
                     exportchartData.push(series.data[0])
                 }
-                if(!["min","max","trimmedmin","trimmedmax","avg","trimmedarea","minmaxarea","clippedarea","clippedmin","clippedmax"].includes(series.data[0].metadata.name)) {
+                if(!["HISTORICALmin","HISTORICALmax","trimmedmin","trimmedmax","HISTORICALavg","trimmedarea","minmaxarea","clippedarea","clippedmin","clippedmax"].includes(series.data[0].metadata.name)) {
                     vizchartData.push(series.data[0])
                 }
             }
@@ -746,7 +748,10 @@ function AlignedTimeseries(props) {
 
 
         if( conf_average === true ) {
-            queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "avg") ){linechartdata.push(r.data[0])}})
+            queryResults.forEach(r=>{ if(r.data && r.data[0] && (r.data[0].metadata.name == "HISTORICALavg") ){
+                r.data[0].metadata.name="Historical mean";
+                linechartdata.push(r.data[0]);
+            }})
             
         }
         if( conf_trimmedareabol === true ) {

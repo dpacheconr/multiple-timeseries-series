@@ -1,7 +1,7 @@
 {
     "schemaType": "VISUALIZATION",
     "id": "multi-timeseries-series",
-    "displayName": "Multi Period Comparison",
+    "displayName": "Historical Period Compare",
     "description": "Displays timeseries data from different periods on the same chart",
     "configuration": [
         
