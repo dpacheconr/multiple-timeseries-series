@@ -1,13 +1,13 @@
 {
     "private": true,
     "name": "multi-timeseries-series",
-    "version": "0.0.73",
+    "version": "0.0.105",
     "scripts": {
         "start": "nr1 nerdpack:serve",
         "test": "exit 0"
     },
     "nr1": {
-        "uuid": "ce08dfb6-3d9f-4bdc-bd28-4870d66c5305"
+        "uuid": "5b1dc7dc-8c51-4df3-b7b2-6d024075524d"
     },
     "dependencies": {
         "chroma-js": "^2.4.2",
