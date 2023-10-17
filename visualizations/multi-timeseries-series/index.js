@@ -125,8 +125,8 @@ function AlignedTimeseries(props) {
         var output
         if (objname == "tooltip"){
             let formatter= (conf_datetimestringformat_tooltip === null || conf_datetimestringformat_tooltip==="") ? "YYYY/MM/DD hh:mm:ss" : conf_datetimestringformat_tooltip
-            output = moment.tz(timestamp,conf_timezone).format(formatter)
-        } if (objname == "csv"){
+            output = moment.tz(timestamp,conf_timezone).format(formatter);
+        } else if (objname == "csv"){
             let formatter=  "YYYY/MM/DD hh:mm:ss" ;
             output = moment.tz(timestamp,conf_timezone).format(formatter)
         } else {
@@ -292,7 +292,7 @@ function AlignedTimeseries(props) {
       
         // update queries with calculated data
         if(conf_average === true) { 
-            data.push({"data":[{"data":avgarrctrl, "metadata":{"viz":"main","name": "HISTORICALavg","id":"74B5B05EEA583471E03DCBF0123D81CC79CAE0FE9", "color": getColor(1)}}],loading: false, error: null});
+            data.push({"data":[{"data":avgarrctrl, "metadata":{"viz":"main","name": "HISTORICALavg","id":"74B5B05EEA583471E03DCBF0123D81CC79CAE0FE9", "color": getColor("averageLine")}}],loading: false, error: null});
         }
         if(conf_trimmedareabol === true) {
             data.push({"data":[{"data":trimmedareactrl, "metadata":{"viz":"main","name": "trimmedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CEE0FE9", "color":getColor("trimmedArea")}}],loading: false, error: null})
@@ -331,13 +331,15 @@ function AlignedTimeseries(props) {
             clippedArea: "#22DC6499",
             trimmedArea: "#0262BC66",
             minmaxArea: "#66666666",
-            history: ['#8dd3c7','#ffffb3','#bebada','#fb8072','#80b1d3','#fdb462','#b3de69','#fccde5','#d9d9d9','#bc80bd','#ccebc5','#ffed6f'],
+            averageLine: '#a6cee3',
+            history: ['#ffffb3','#bebada','#fb8072','#80b1d3','#fdb462','#b3de69','#fccde5','#d9d9d9','#bc80bd','#ccebc5','#ffed6f','#8dd3c7'],
         },
         "strong": {
             primary: "#c25f19",
             clippedArea: "#22DC6499",
             trimmedArea: "#0262BC66",
             minmaxArea: "#66666666",
+            averageLine: '#a6cee3',
             history: ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928'],
         },
         "greyfade": {
@@ -345,6 +347,7 @@ function AlignedTimeseries(props) {
             clippedArea: "#22DC6499",
             trimmedArea: "#0262BC66",
             minmaxArea: "#66666666",
+            averageLine: '#a6cee3',
             history: chroma.scale(['#c9c9c9', '#f2f2f2']).colors(fadeColorSize),
         },
         "bluefade": {
@@ -352,6 +355,7 @@ function AlignedTimeseries(props) {
             clippedArea: "#22DC6499",
             trimmedArea: "#0262BC66",
             minmaxArea: "#66666666",
+            averageLine: '#a6cee3',
             history: chroma.scale(['#5689c7', '#dae4f0']).colors(fadeColorSize),
         },
         "retrometro": {
@@ -359,6 +363,7 @@ function AlignedTimeseries(props) {
             clippedArea: "#22DC6499",
             trimmedArea: "#0262BC66",
             minmaxArea: "#66666666",
+            averageLine: '#a6cee3',
             history: ["#ea5545", "#f46a9b", "#ef9b20", "#edbf33", "#ede15b", "#bdcf32", "#87bc45", "#27aeef", "#b33dc6"]
         },
         "dutchfield": {
@@ -366,6 +371,7 @@ function AlignedTimeseries(props) {
             clippedArea: "#22DC6499",
             trimmedArea: "#0262BC66",
             minmaxArea: "#66666666",
+            averageLine: '#a6cee3',
             history:  ["#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]
         },
         "pinkblack": {
@@ -373,6 +379,7 @@ function AlignedTimeseries(props) {
             clippedArea: "#22DC6499",
             trimmedArea: "#0262BC66",
             minmaxArea: "#66666666",
+            averageLine: '#a6cee3',
             history:  ["#2e2b28", "#3b3734", "#474440", "#54504c", "#6b506b", "#ab3da9", "#de25da", "#eb44e8", "#ff80ff"].reverse()
         },
         "brewer-YlGnBu": {
@@ -380,6 +387,7 @@ function AlignedTimeseries(props) {
             clippedArea: "#22DC6499",
             trimmedArea: "#0262BC66",
             minmaxArea: "#66666666",
+            averageLine: '#a6cee3',
             history:  chroma.scale('YlGnBu').colors(fadeColorSize).reverse()
         },
         "brewer-RdPu": {
@@ -387,6 +395,7 @@ function AlignedTimeseries(props) {
             clippedArea: "#22DC6499",
             trimmedArea: "#0262BC66",
             minmaxArea: "#66666666",
+            averageLine: '#a6cee3',
             history:  chroma.scale('RdPu').colors(fadeColorSize).reverse()
         }
        
