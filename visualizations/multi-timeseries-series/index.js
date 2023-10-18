@@ -72,7 +72,6 @@ function AlignedTimeseries(props) {
         conf_referenceareas,
         conf_toggleReload
     } = props;
-
         // !! The creator returns nulls and empty string, the editor undefined!
         //grp_data
         const conf_accountId = !grp_data ? null : grp_data.conf_accountId == undefined ? null : grp_data.conf_accountId ;
@@ -83,6 +82,7 @@ function AlignedTimeseries(props) {
         
 
         //grp_window
+        const conf_overridepicker = !grp_window ? null : grp_window.conf_overridepicker  == undefined ? false :grp_window.conf_overridepicker ;
         const conf_startunixtime = !grp_window ? null : grp_window.conf_startunixtime  == undefined ? null :grp_window.conf_startunixtime ;
         const conf_endunixtime = !grp_window ? null :grp_window.conf_endunixtime  == undefined ? null :grp_window.conf_endunixtime;
         const conf_duration = !grp_window ? null :grp_window.conf_duration  == undefined ? null :grp_window.conf_duration;
@@ -418,10 +418,9 @@ function AlignedTimeseries(props) {
     const [globalError, setGlobalError] = useState(null);
     const [windowsizeMoment, setWindowsizeMoment] = useState(DefaultWindowSizeMoment.clone());
     const [toggleReload, setToggleReload] = useState(true);
+    const [pickerTimeRange, setPickerTimeRange] = useState(true);
 
     let timeRangeMoment;
-    let overrideTimePicker=false;
-
 
 
     //determine time window overrides
@@ -481,7 +480,6 @@ function AlignedTimeseries(props) {
             duration: null, 
             end_time: endMoment.clone()
         };
-        overrideTimePicker=true;
     } else if(startMoment &&  durationMoment ) {  // start and duration provided
         console.log("Start and duration provided", startMoment.format(), durationMoment.valueOf())
         timeRangeMoment = {
@@ -489,7 +487,6 @@ function AlignedTimeseries(props) {
             duration: null, 
             end_time: startMoment.clone().add(durationMoment)
         };
-        overrideTimePicker=true;
     } else if(endMoment && durationMoment) { // end and duration provided
         console.log("End and duration provided", endMoment.format(),endMoment.format("x"), durationMoment.valueOf())
         timeRangeMoment = {
@@ -497,7 +494,6 @@ function AlignedTimeseries(props) {
             duration: null, 
             end_time: endMoment.clone()
         };
-        overrideTimePicker=true;
     } else if( durationMoment) { // just duration provided, assume thats a since duration time ago until now
         console.log("Just duration provided", durationMoment.valueOf())
         timeRangeMoment = {
@@ -505,13 +501,16 @@ function AlignedTimeseries(props) {
             duration: durationMoment.clone(), 
             end_time: null
         };
-        overrideTimePicker=true;
     }
 
     const cplatformstatecontext = useContext(PlatformStateContext);
+    const incomingTimeRange=cplatformstatecontext.timeRange;
+    console.log("cplatformstatecontext",cplatformstatecontext)
+    const pickerIsDefault=cplatformstatecontext.timeRange == undefined;
 
     async function  dataLoader() {
         console.log("Data loader called");
+
         c_accountid = conf_accountId
         let mainquery = conf_query
         let nrqlQueries = [{accountId: c_accountid, query: conf_query, color: getColor('primary')} ]
@@ -519,17 +518,32 @@ function AlignedTimeseries(props) {
         trimpercent = (conf_trimpercent != "" && conf_trimpercent!=null) ? conf_trimpercent : 10; //default to 10
         clipSize = (conf_clipsize != "" && conf_clipsize != null ) ? conf_clipsize : 1;
     
-        if(overrideTimePicker) { // if a fixed window has been provided then we use that instead of any values delivered via the time picker.
-            //tempoary unix removal test
-            cplatformstatecontext.timeRange={}
-            cplatformstatecontext.timeRange.begin_time_moment=timeRangeMoment.begin_time  ;
-            cplatformstatecontext.timeRange.end_time_moment=timeRangeMoment.end_time ;
-            cplatformstatecontext.timeRange.duration_moment=timeRangeMoment.duration;
+
+        let useSettings=true;
+        console.log("pickerIsDefault",pickerIsDefault)
+        if(pickerIsDefault) {
+            useSettings=true;
+        } else { //picker values set
+            if(conf_overridepicker===true) {
+                useSettings=true;
+            } else {
+                useSettings=false;
+            }
+        }
+        console.log("useSettings",useSettings)
+        if(useSettings) { // if a fixed window has been provided then we use that instead of any values delivered via the time picker.
+            console.log("Time window settings being used to set window")
+            cplatformstatecontext.timeRangeMoment={}
+            cplatformstatecontext.timeRangeMoment.begin_time_moment=timeRangeMoment.begin_time  ;
+            cplatformstatecontext.timeRangeMoment.end_time_moment=timeRangeMoment.end_time ;
+            cplatformstatecontext.timeRangeMoment.duration_moment=timeRangeMoment.duration;
         } else {
             //data provided by time picker.
-            cplatformstatecontext.timeRange.begin_time_moment=timeRange.begin_time == null ? null : moment(timeRange.begin_time) ;
-            cplatformstatecontext.timeRange.end_time_moment=timeRange.end_time == null ? null : moment(timeRange.end_time) ;
-            cplatformstatecontext.timeRange.duration_moment=timeRange.duration  == null ? null : moment.duration(duration) ;
+            console.log("Time picker being used to set window")
+            cplatformstatecontext.timeRangeMoment={}
+            cplatformstatecontext.timeRangeMoment.begin_time_moment=cplatformstatecontext.timeRange.begin_time == null ? null : moment.tz(cplatformstatecontext.timeRange.begin_time, conf_timezone) ;
+            cplatformstatecontext.timeRangeMoment.end_time_moment=cplatformstatecontext.timeRange.end_time == null ? null : moment.tz(cplatformstatecontext.timeRange.end_time, conf_timezone) ;
+            cplatformstatecontext.timeRangeMoment.duration_moment=cplatformstatecontext.timeRange.duration  == null ? null : moment.duration(cplatformstatecontext.timeRange.duration) ;
         }
     
     
@@ -537,15 +551,15 @@ function AlignedTimeseries(props) {
 
             //moment version
             let sinceTimeMoment, untilTimeMoment ;
-            if (cplatformstatecontext.timeRange && cplatformstatecontext.timeRange.duration_moment == null){ //timepicker chosen start and end time
+            if (cplatformstatecontext.timeRangeMoment && cplatformstatecontext.timeRangeMoment.duration_moment == null){ //timepicker chosen start and end time
                 console.log("Time range set by start/end time")
-                setWindowsizeMoment( moment.duration(cplatformstatecontext.timeRange.end_time_moment.diff(cplatformstatecontext.timeRange.begin_time_moment)) );
-                sinceTimeMoment = cplatformstatecontext.timeRange.begin_time_moment
-                untilTimeMoment = cplatformstatecontext.timeRange.end_time_moment
-            } else if(cplatformstatecontext.timeRange && cplatformstatecontext.timeRange.duration != null) {  //timepicker value is relative
+                setWindowsizeMoment( moment.duration(cplatformstatecontext.timeRangeMoment.end_time_moment.diff(cplatformstatecontext.timeRangeMoment.begin_time_moment)) );
+                sinceTimeMoment = cplatformstatecontext.timeRangeMoment.begin_time_moment
+                untilTimeMoment = cplatformstatecontext.timeRangeMoment.end_time_moment
+            } else if(cplatformstatecontext.timeRangeMoment && cplatformstatecontext.timeRangeMoment.duration_moment != null) {  //timepicker value is relative
                 console.log("Time range set by duration")
                 untilTimeMoment = moment.tz(conf_timezone)
-                sinceTimeMoment =  untilTimeMoment.clone().subtract(cplatformstatecontext.timeRange.duration_moment);
+                sinceTimeMoment =  untilTimeMoment.clone().subtract(cplatformstatecontext.timeRangeMoment.duration_moment);
                 setWindowsizeMoment(moment.duration(untilTimeMoment.diff(sinceTimeMoment)))
             } else {
                 console.log("Time range not set, using default")
@@ -643,12 +657,10 @@ function AlignedTimeseries(props) {
         calculatedata(data)
         setQueryResults(data)
     }
-    if(conf_toggleReload != toggleReload) {
-        setToggleReload(conf_toggleReload)
-        dataLoader()
-    }
+
 
     useEffect(async () => {   
+        console.log("cplatformstatecontext",cplatformstatecontext)
         dataLoader()   
 
             let refreshratems = (conf_refreshrate === null || conf_refreshrate === "null") ? null : parseInt(conf_refreshrate)*1000
@@ -672,7 +684,7 @@ function AlignedTimeseries(props) {
             }
         
         return () => clearInterval(interval);         //whats this? whats interval?   
-     },{...props});
+     },[conf_toggleReload,incomingTimeRange]);
 
     
      if (globalError != undefined){
