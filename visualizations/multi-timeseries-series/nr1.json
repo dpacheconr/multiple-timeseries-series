@@ -147,6 +147,12 @@
             "type": "namespace",
             "items": [
                 {
+                    "name": "conf_overridepicker",
+                    "title": "Override time picker",
+                    "description": "Override time picker.",
+                    "type": "boolean"
+                },
+                {
                     "name": "conf_startunixtime",
                     "title": "Start (unixtime seconds)",
                     "description": "Latest period start time",

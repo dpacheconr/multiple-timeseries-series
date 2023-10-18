@@ -13,6 +13,7 @@ var _ = require('lodash');
 let c_accountid
 let trimpercent
 let clipSize
+let interval = null
 
 const DefaultWindowSizeMoment=moment.duration("PT1H")
 
@@ -505,7 +506,7 @@ function AlignedTimeseries(props) {
 
     const cplatformstatecontext = useContext(PlatformStateContext);
     const incomingTimeRange=cplatformstatecontext.timeRange;
-    console.log("cplatformstatecontext",cplatformstatecontext)
+   
     const pickerIsDefault=cplatformstatecontext.timeRange == undefined;
 
     async function  dataLoader() {
@@ -520,7 +521,6 @@ function AlignedTimeseries(props) {
     
 
         let useSettings=true;
-        console.log("pickerIsDefault",pickerIsDefault)
         if(pickerIsDefault) {
             useSettings=true;
         } else { //picker values set
@@ -530,7 +530,6 @@ function AlignedTimeseries(props) {
                 useSettings=false;
             }
         }
-        console.log("useSettings",useSettings)
         if(useSettings) { // if a fixed window has been provided then we use that instead of any values delivered via the time picker.
             console.log("Time window settings being used to set window")
             cplatformstatecontext.timeRangeMoment={}
@@ -661,6 +660,7 @@ function AlignedTimeseries(props) {
 
     useEffect(async () => {   
         console.log("cplatformstatecontext",cplatformstatecontext)
+
         dataLoader()   
 
             let refreshratems = (conf_refreshrate === null || conf_refreshrate === "null") ? null : parseInt(conf_refreshrate)*1000
@@ -675,15 +675,17 @@ function AlignedTimeseries(props) {
                 } else { // over 60 minutes -> refresh every 5 minutes
                     refreshratems = 60*5*1000
                 } 
-
             }
             
+            if(interval!=null) {
+                clearInterval(interval);
+                console.log("Clearing interval")
+            }
             if(refreshratems>0) {
                 console.log("Will refresh the data again in ",refreshratems);
-                setInterval(() => {dataLoader();}, refreshratems);
+                interval=setInterval(() => {dataLoader();}, refreshratems);
             }
-        
-        return () => clearInterval(interval);         //whats this? whats interval?   
+        return () => {};         //whats this? 
      },[conf_toggleReload,incomingTimeRange]);
 
     
