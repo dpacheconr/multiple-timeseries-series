@@ -53,12 +53,12 @@ function getMinMax(data) {
 
 function build_json(z,i,array,value) {
     let datatopass={}
-    datatopass.begin_time=z.begin_time
-    datatopass.end_time=z.end_time
-    datatopass.x=z.x
-    datatopass.y=array[i]
-    datatopass[value]=array[i]
-    return datatopass
+    datatopass.begin_time=z.begin_time;
+    datatopass.end_time=z.end_time;
+    datatopass.x=z.x;
+    datatopass.y=array[i];
+    datatopass[value]=array[i];
+    return datatopass;
 }
 
 
@@ -283,9 +283,9 @@ function AlignedTimeseries(props) {
             minmaxminsctrl.push(build_json(z,i,minmaxmins,"HISTORICALmin"))
             minmaxmaxsctrl.push(build_json(z,i,minmaxmaxs,"HISTORICALmax"))
 
+            clippedareactrl.push(build_json(z,i,clippedarea,"clippedarea"))
             clippedminctrl.push(build_json(z,i,clippedmin,"clippedmin"))
             clippedmaxctrl.push(build_json(z,i,clippedmax,"clippedmax"))
-            clippedareactrl.push(build_json(z,i,clippedarea,"clippedarea"))
 
         }
     
@@ -296,18 +296,18 @@ function AlignedTimeseries(props) {
             data.push({"data":[{"data":avgarrctrl, "metadata":{"viz":"main","name": "HISTORICALavg","id":"74B5B05EEA583471E03DCBF0123D81CC79CAE0FE9", "color": getColor("averageLine")}}],loading: false, error: null});
         }
         if(conf_trimmedareabol === true) {
-            data.push({"data":[{"data":trimmedareactrl, "metadata":{"viz":"main","name": "trimmedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CEE0FE9", "color":getColor("trimmedArea")}}],loading: false, error: null})
+            data.push({"data":[{"data":trimmedareactrl, "metadata":{"viz":"main","displayName": "Trimmed max/min","name": "trimmedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CEE0FE9", "color":getColor("trimmedArea"), "toolTipColor":chroma(getColor("trimmedArea")).alpha(1).darken(2).hex()}}],loading: false, error: null})
             data.push({"data":[{"data":trimmedminctrl, "metadata":{"viz":"main","name": "trimmedmin","id":"02D6A84F7B97E4709A11276615FDAAB3EE2BEE415", "color": getColor(2)}}],loading: false, error: null})
             data.push({"data":[{"data":trimmedmaxctrl, "metadata":{"viz":"main","name": "trimmedmax","id":"2C1F4F2BAA2800FD80F50C3811F38D03B52DEEEB1", "color":getColor(2)}}],loading: false, error: null})
         }
         if(conf_clippedareabol === true) {
-            data.push({"data":[{"data":clippedareactrl, "metadata":{"viz":"main","name": "clippedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0JE8", "color": getColor("clippedArea")}}],loading: false, error: null})
+            data.push({"data":[{"data":clippedareactrl, "metadata":{"viz":"main","displayName": "Clipped max/min","name": "clippedarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0JE8", "color": getColor("clippedArea"), "toolTipColor":chroma(getColor("clippedArea")).alpha(1).darken(2).hex()}}],loading: false, error: null})
             data.push({"data":[{"data":clippedminctrl, "metadata":{"viz":"main","name": "clippedmin","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0LE8", "color": getColor(3)}}],loading: false, error: null})
             data.push({"data":[{"data":clippedmaxctrl, "metadata":{"viz":"main","name": "clippedmax","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE8", "color": getColor(3)}}],loading: false, error: null})
         }
         
         if( conf_minmaxareabol === true) {
-            data.push({"data":[{"data":minmaxareactrl, "metadata":{"viz":"main","name": "minmaxarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE9", "color": getColor("minmaxArea")}}],loading: false, error: null})
+            data.push({"data":[{"data":minmaxareactrl, "metadata":{"viz":"main","displayName": "Clipped Max/Min","name": "minmaxarea","id":"74B5B05EEA583471E03DCBF0123D81CC79CDE0FE9", "color": getColor("minmaxArea"), "toolTipColor":chroma(getColor("minmaxArea")).alpha(1).darken(2).hex()}}],loading: false, error: null})
             data.push({"data":[{"data":minmaxminsctrl, "metadata":{"viz":"main","name": "HISTORICALmin","id":"625D011FAC794651F25160AD89612DFAAE954C0CB", "color":getColor(3)}}],loading: false, error: null})
             data.push({"data":[{"data":minmaxmaxsctrl, "metadata":{"viz":"main","name": "HISTORICALmax","id":"DDB4E3844C923B3F794EC52642E22CBE9FC8D8D31", "color": getColor(3)}}],loading: false, error: null})
         }
@@ -418,8 +418,6 @@ function AlignedTimeseries(props) {
     const [queryResults, setQueryResults] = useState(null);
     const [globalError, setGlobalError] = useState(null);
     const [windowsizeMoment, setWindowsizeMoment] = useState(DefaultWindowSizeMoment.clone());
-    const [toggleReload, setToggleReload] = useState(true);
-    const [pickerTimeRange, setPickerTimeRange] = useState(true);
 
     let timeRangeMoment;
 
@@ -659,7 +657,6 @@ function AlignedTimeseries(props) {
 
 
     useEffect(async () => {   
-        console.log("cplatformstatecontext",cplatformstatecontext)
 
         dataLoader()   
 
@@ -920,9 +917,9 @@ function AlignedTimeseries(props) {
           <Legend />
           {referenceAreas}
           {referenceLines}
-          {linechartdata.map((s) => (<Line type="monotone" dot={false} stroke={s.metadata.color} strokeWidth={5} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>))}   
-          {arechartdata.map((s) => (<Area type="monotone" fill={s.metadata.color} dataKey="y" legendType='none' data={s.data}  name="" strokeWidth={0} key={s.metadata.name}/>))}
-          {vizchartData.map((s) => {return <Line type="monotone" dot={showDots} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>})}
+          {linechartdata.map((s) => (<Line isAnimationActive={false} type="monotone" dot={false} stroke={s.metadata.color} strokeWidth={5} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>))}   
+          {arechartdata.map((s) => (<Area isAnimationActive={false} type="monotone" fill={s.metadata.color} stroke={s.metadata.toolTipColor} dataKey="y" legendType='none' data={s.data}  name={s.metadata.displayName} strokeWidth={0} key={s.metadata.name}/>))}
+          {vizchartData.map((s) => {return <Line isAnimationActive={false} type="monotone" dot={showDots} stroke={s.metadata.color} strokeWidth={2} dataKey="y" data={s.data} name={s.metadata.name} key={s.metadata.name}/>})}
           {refPoint}
         </ComposedChart>    
         <div id="CSVloader">{outTable}</div>
